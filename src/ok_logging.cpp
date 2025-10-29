@@ -30,17 +30,20 @@ void ok_logv(char const* tag, OkLoggingLevel lev, char const* f, va_list args) {
 
   char stack_buf[128];
   char* buf = stack_buf;
-  int buf_size = sizeof(stack_buf);
-  while (true) {
-    auto len = vsnprintf(buf, buf_size, f, args);
-    if (len >= buf_size) {
-      if (buf != stack_buf) delete[] buf;
-      buf_size = len + 1;
-      buf = new char[buf_size];
+  auto len = vsnprintf(buf, sizeof(stack_buf), f, args);
+  if (len < 0) {
+    buf = strncpy(stack_buf, "[log formatting error]", sizeof(stack_buf));
+  } else if (len >= sizeof(stack_buf)) {
+    buf = (char*) malloc(len + 1);
+    if (buf == nullptr) {
+      buf = strncpy(stack_buf, "[log allocation error]", sizeof(stack_buf));
     } else {
-      if (len < 0) strncpy(buf, "[log message formatting error]", buf_size);
-      while (len > 0 && (buf[len - 1] == '\n' || buf[len - 1] == '\r')) --len;
-      break;
+      auto len2 = vsnprintf(buf, len + 1, f, args);
+      if (len2 < 0) {
+        buf = strncpy(stack_buf, "[log formatting error]", sizeof(stack_buf));
+      } else {
+        while (len > 0 && (buf[len - 1] == '\n' || buf[len - 1] == '\r')) --len;
+      }
     }
   }
 
@@ -55,7 +58,7 @@ void ok_logv(char const* tag, OkLoggingLevel lev, char const* f, va_list args) {
     switch (lev) {
       case OK_FATAL_LEVEL: log_output->print(" 💥 "); break;
       case OK_ERROR_LEVEL: log_output->print(" ⚠️ "); break;
-      case OK_NOTICE_LEVEL: log_output->print(" "); break;
+      case OK_NOTE_LEVEL: log_output->print(" "); break;
       case OK_DETAIL_LEVEL: log_output->print(" 🕸️ "); break;
     }
     if (tag != nullptr && tag[0] != '\0') {
@@ -68,7 +71,7 @@ void ok_logv(char const* tag, OkLoggingLevel lev, char const* f, va_list args) {
 
   log_output->println(message);
 
-  if (buf != stack_buf) delete[] buf;
+  if (buf != stack_buf) free(buf);
   if (lev == OK_FATAL_LEVEL) {
     log_output->println("  🚨 REBOOT IN 1 SEC 🚨\n");
     log_output->flush();
@@ -135,7 +138,7 @@ static OkLoggingLevel level_for_name(char const* level, char const* end) {
   if (is("default") ||
       is("i") || is("info") ||
       is("n") || is("normal") || is("note") || is("notice") || is("notable")) {
-    return OK_NOTICE_LEVEL;
+    return OK_NOTE_LEVEL;
   }
 
   if (is("e") || is("error") ||
@@ -155,7 +158,7 @@ static OkLoggingLevel level_for_name(char const* level, char const* end) {
 }
 
 static OkLoggingLevel min_level_for_tag(char const* tag) {
-  if (ok_logging_config == nullptr) return OK_NOTICE_LEVEL;
+  if (ok_logging_config == nullptr) return OK_NOTE_LEVEL;
 
   // Find the "tag=level,..." entry that matches the given tag
   char const* config_end = ok_logging_config + strlen(ok_logging_config);
@@ -181,7 +184,7 @@ static OkLoggingLevel min_level_for_tag(char const* tag) {
       return level_for_name(level, level_end);
     }
 
-    if (entry_end == config_end) return OK_NOTICE_LEVEL;  // Default
+    if (entry_end == config_end) return OK_NOTE_LEVEL;  // Default
     pos = entry_end + 1;
   }
 }

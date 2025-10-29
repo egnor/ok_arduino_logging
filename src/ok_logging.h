@@ -8,7 +8,7 @@
 
 enum OkLoggingLevel : int8_t {
   OK_DETAIL_LEVEL,
-  OK_NOTICE_LEVEL,
+  OK_NOTE_LEVEL,
   OK_ERROR_LEVEL,
   OK_FATAL_LEVEL,
 };
@@ -25,7 +25,7 @@ struct OkLoggingContext {
 extern char const* const ok_logging_config;
 
 #define OK_DETAIL(fmt, ...) OK_REPORT(OK_DETAIL_LEVEL, fmt, ##__VA_ARGS__)
-#define OK_NOTICE(fmt, ...) OK_REPORT(OK_NOTICE_LEVEL, fmt, ##__VA_ARGS__)
+#define OK_NOTE(fmt, ...) OK_REPORT(OK_NOTE_LEVEL, fmt, ##__VA_ARGS__)
 #define OK_ERROR(fmt, ...) OK_REPORT(OK_ERROR_LEVEL, fmt, ##__VA_ARGS__)
 #define OK_FATAL(fmt, ...) OK_REPORT_SOURCE(OK_FATAL_LEVEL, fmt, ##__VA_ARGS__)
 #define OK_FATAL_IF(c) if (c) OK_FATAL("%s", #c) else {}
