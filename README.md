@@ -23,7 +23,7 @@ Other niceties include:
 - assert-like `OK_ERROR_IF(...)` and `OK_FATAL_IF(...)` macros for convenience
 - source file, line, and function reporting for fatal and assert-check errors, but not others
 - compact emoji representations of log levels
-- basic unit tests (!!) using [wokwi](https://wokwi.com/)
+- [basic unit tests](tests) (!!) using [wokwi](https://wokwi.com/)
 
 These would be nice but are NOT currently supported:
 - custom formatting of log lines

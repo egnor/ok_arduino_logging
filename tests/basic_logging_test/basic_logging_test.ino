@@ -10,9 +10,9 @@ void setup() {
   OK_NOTE("Note with\nnewlines in the\nmiddle");
   OK_ERROR("Error");
   OK_ERROR("\n\nError with newlines before and after\n\n");
-  OK_FATAL("Fatal!");
 }
 
 void loop() {
-  delay(1000);  // Never gets reached anyway
+  Serial.println("+++SIMDONE");
+  delay(1000);
 }
