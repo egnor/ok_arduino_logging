@@ -1,30 +1,35 @@
 # ok_arduino_logging
 
-Simple diagnostic printf logging for Arduino-ish code on 32-bit+ processors, with support for module tagging and per-module level filtering.
+Simple diagnostic printf logging for Arduino-ish code on 32-bit+ processors, with support for tagging and per-tag level filtering.
 
 You should first consider these more established libraries:
 - [Arduino-Log](https://github.com/JSC-TechMinds/Arduino-Log) - level filtering, printf formatting, multiple `Print` outputs
-- [arduino-logger](https://github.com/embeddedartistry/arduino-logger) - level filtering, printf formatting, ISR-safe, many buffer/output choices, some of which do level filtering for numbered modules
+- [arduino-logger](https://github.com/embeddedartistry/arduino-logger) - level filtering, printf formatting, ISR-safe, many buffer/output choices, some of which support numbered subsystem tags
 - [DebugLog](https://github.com/hideakitai/DebugLog) - level filtering, argument formatting, `Stream` and/or file output
-- [EasyLogger](https://github.com/x821938/EasyLogger) - level filtering, module ("service") filtering, any `Print` output
-- [ESPLogger](https://github.com/kuslota/esplogger) - per-module level filtering loggers, no formatting, serial output
+- [EasyLogger](https://github.com/x821938/EasyLogger) - level filtering, tag ("service") filtering, any `Print` output
+- [ESPLogger](https://github.com/kuslota/esplogger) - per-logger level filtering, no formatting, serial output
 - [Logger](https://github.com/bakercp/Logger) - level filtering, no formatting, serial output or custom function
-- [MycilaLogger](https://github.com/mathieucarbou/MycilaLogger) - ESP32 only, per-module level filtering loggers, printf formatting, multiple `Print` outputs
+- [MycilaLogger](https://github.com/mathieucarbou/MycilaLogger) - per-logger level filtering, printf formatting, multiple `Print` outputs, ESP32 only
 - [SerialLogger](https://github.com/UltiBlox/SerialLogger) - combined data/diagnostic logging, no formatting, level filtering, serial output
 
-This library (ok_arduino_logging) differs by supporting centrally configured name-based per-module log level filtering. Source files set a module name (arbitrary string like `network` or `imu-data` or `my_library.callbacks`) to attach to log statements in the file. The main app is compiled with a filter expression defining the log level for each module (like `network=detail,imu-data=error,my_library.*=notice`). The filter is evaluated at startup so log statements run quickly.
+This library (ok_arduino_logging) adds **centrally configured string-tag log level filtering**: Each source file define a tag string which is added to logs from that file. The main app/sketch is compiled with a filter expression for tags and log levels, so you can easily dial verbosity up and down for the app or subsystems without modifying code.
+
+Log tags are free form strings: they can be the source file name, a logical subsystem name, the name of a library, or whatever else makes sense for filtering. Multiple source files can use the same tag, and tags can be localized to classes or functions. Filter expressions can use `*` wildcards for tag matching to allow for structured tags (like `network.http.parser`).
+
+Importantly, libraries can use tags (often the library name, maybe with suffixes) so the app can tweak per-library log verbosity without modifying library code.
 
 Other niceties include:
 - printf formatting (arguments aren't evaluated if the log is suppressed)
-- assert-like `OK_ERROR_IF(...)` and `OK_FATAL_IF(...)` macros
-- source file, line, and function reported for fatal and assert-check errors, but not others
+- assert-like `OK_ERROR_IF(...)` and `OK_FATAL_IF(...)` macros for convenience
+- source file, line, and function reporting for fatal and assert-check errors, but not others
 - compact emoji representations of log levels
+- basic unit tests (!!) using [wokwi](https://wokwi.com/)
 
-These would be nice but are NOT supported:
-- NO custom formatting of log lines
-- NO routing to multiple destinations (eg. sd card + serial)
-- NO management of I/O blocking from logging
-- NO thread or ISR safety guarantees
+These would be nice but are NOT currently supported:
+- custom formatting of log lines
+- routing to multiple destinations (eg. sd card + serial)
+- management/prevention of I/O blocking from logging
+- thread or ISR safety guarantees
 
 ## Minimal example
 
@@ -36,6 +41,7 @@ static OkLoggingContext OK_CONTEXT("my_app");
 void setup() {
   Serial.begin(115200);  // or whatever
   OK_NOTE("In setup!");
+  OK_ERROR("Oh no, an error occurred!");
 }
 
 void loop() {
@@ -44,33 +50,46 @@ void loop() {
 }
 ```
 
-There must be an `OkLoggingContext` object named `OK_CONTEXT` in scope for any logging macro use. This is normally a static global at file scope, as above. The object constructor takes the module name, which is any string descriptive of that section of code, or may be omitted.
+> [!NOTE]
+> An `OkLoggingContext` object named `OK_CONTEXT` must be in scope for any logging macro use. This is typically a file-scoped static global, as above. The constructor takes the tag to use.
+
+This example generates output like the following:
+
+```
+0.524 [my_app] In setup!
+0.525 ⚠️ [my_app] Oh no, an error happened!
+0.526 [my_app] In loop!
+1.996 [my_app] In loop!
+
+```
 
 ## Reference
 
-Available logging macros and functions:
+Several macros and functions are defined in `<ok_logging.h>`
 - `OK_DETAIL(fmt, ...)` - lowest priority level
 - `OK_NOTE(fmt, ...)` - "normal" priority level
 - `OK_ERROR(fmt, ...)` - elevated priority, indicates a problem
 - `OK_FATAL(fmt, ...)` - highest priority, aborts and reboots
-- `OK_FATAL_IF(cond)` - if `cond` is `true`, reports source location and `#cond`, aborts and reboots
-- `OK_ERROR_IF(cond)` - if `cond` is `true`, reports source location and `#cond`, returns the value of `cond` either way
-- `set_ok_logging_output(output)` - redirects output to a `Print*` stream (`&Serial` by default)
-- `set_ok_logging_global_minimum(level)` - sets a global level minimum level, and returns the old global level (default `OK_DETAIL_LEVEL`)
+- `OK_FATAL_IF(cond)` - if `cond` is `true`, logs source location and `#cond`, aborts and reboots
+- `OK_ERROR_IF(cond)` - if `cond` is `true`, logs source location and `#cond`; returns `cond` either way
+- `set_ok_logging_output(output)` - redirects logs to a `Print*` stream (`&Serial` by default)
+- `set_ok_logging_global_minimum(level)` - sets a global minimum level to print, and returns the old global minimum level (default `OK_DETAIL_LEVEL`)
 
-## Logging level configuration
+## Log verbosity configuration
 
-Logging levels are set with a configuration string, which can be set one of two ways:
+Logs are filtered with a global configuration string, which can be set one of two ways:
 - Define `char const* ok_logging_config = "...";` in a source file
 - OR pass `-DOK_LOGGING_CONFIG=...` to the compiler
 
-Either way, the configuration string is a comma-separated series of `moduleglob=level` expressions, where `moduleglob` is the name of a module (as used to initialize `OK_CONTEXT`) or a pattern with `*` wildcards, and `level` is a logging level such as `DETAIL`, `NOTE` or `ERROR`. A bare `level` with no `=` matches all modules, equivalent to `*=level`. The first matching rule is used for any given module.
+Either way, the configuration string is a comma-separated series of `tagpattern=level` rules, where `tagpattern` is a log tag (as set in `OK_CONTEXT`) with optional `*` wildcards, and `level` is one of `DETAIL`, `NOTE`, `ERROR`, or `FATAL`. A bare level name with no `=` is equivalent to `*=level`. For each log tag, the first matching rule is used as the minimum level to print.
 
-For example, the configuration "`foo=DETAIL,bar=ERROR,baz.*=NOTICE,FATAL`":
-- shows all messages for module "`foo`"
-- only `ERROR` or `FATAL` for "`bar`"
-- `NOTICE` or higher for any module name starting with "`baz.`" (eg. "`baz.blah`", but not "`baz`" with no period)
-- only `FATAL` for anything else
+For example, the configuration "`foo=DETAIL,bar=ERROR,baz.*=NOTE,FATAL`":
+- shows all messages tagged "`foo`"
+- only `ERROR` or `FATAL` messages tagged "`bar`"
+- `NOTE` or higher for any tag starting with "`baz.`" (eg. "`baz.blah`", but not "`baz`" with no period)
+- only `FATAL` messages for any other tag
+
+When no rule matches a tag, or there is no configuration, the default is `NOTE` (everything but `DETAIL`).
 
 ## Considerations
 

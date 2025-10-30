@@ -1,0 +1,12 @@
+# Python project metadata, including dependencies & tool settings               
+# https://snarky.ca/what-the-heck-is-pyproject-toml
+
+[project]
+name = "ok_arduino_logging-tests"
+version = "0.1"
+requires-python = ">=3.12"
+
+dependencies = [
+  "ok-logging-setup>=0.2",
+  "ok-subprocess-defaults>=0.1",
+]

@@ -1,0 +1,24 @@
+[tools]
+arduino = "1.3.1"
+python = "3.12"
+uv = "latest"
+
+# https://github.com/houseabsolute/ubi/issues/142
+[tools."ubi:wokwi/wokwi-cli"]
+matching_regex = "wokwi-cli-linuxstatic-x64"
+version = "0.18.0"
+
+[settings]
+experimental = true
+python_compile = false
+
+[env]
+ARDUINO_DIRECTORIES_DATA = "{{config_root}}/build.tmp/arduino"
+ARDUINO_LIBRARY_ENABLE_UNSAFE_INSTALL = "true"
+WOKWI_CLI_TOKEN = "wok_nJuRmrgvs52tPLL16u4MwPF20ciN0pd04da34089"
+
+_.python.venv = { path = "build.tmp/python_venv", create = true }
+UV_PROJECT_ENVIRONMENT = "{{config_root}}/build.tmp/python_venv"
+
+[hooks]
+postinstall = ["arduino-cli core update-index", "uv sync"]

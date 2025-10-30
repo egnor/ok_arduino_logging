@@ -1,0 +1,14 @@
+# Generic, system, text editors                                                 
+*~                                                                              
+\#*\#                                                                           
+_autosave-*                                                                     
+build/                                                                         
+.DS_Store                                                                       
+.~lock.*                                                                        
+.*.swp                                                                          
+*.bak                                                                           
+*.old                                                                           
+*_old                                                                           
+*.tmp                                                                           
+.idea/
+.vscode/                                                                        

@@ -33,26 +33,37 @@ void ok_logv(char const* tag, OkLoggingLevel lev, char const* f, va_list args) {
   auto len = vsnprintf(buf, sizeof(stack_buf), f, args);
   if (len < 0) {
     buf = strncpy(stack_buf, "[log formatting error]", sizeof(stack_buf));
+    len = strlen(buf);
   } else if (len >= sizeof(stack_buf)) {
     buf = (char*) malloc(len + 1);
     if (buf == nullptr) {
       buf = strncpy(stack_buf, "[log allocation error]", sizeof(stack_buf));
+      len = strlen(buf);
     } else {
       auto len2 = vsnprintf(buf, len + 1, f, args);
-      if (len2 < 0) {
-        buf = strncpy(stack_buf, "[log formatting error]", sizeof(stack_buf));
-      } else {
-        while (len > 0 && (buf[len - 1] == '\n' || buf[len - 1] == '\r')) --len;
+      if (len2 != len) {
+        free(buf);
+        buf = strncpy(stack_buf, "[log reformatting error]", sizeof(stack_buf));
+        len = strlen(buf);
       }
     }
   }
 
-  // Print leading blank lines before the log prefix
-  auto const* message = buf;
-  while (*message == '\n') { log_output->println(); ++message; }
+  // Trim trailing newlines
+  while (len > 0 && (buf[len - 1] == '\n' || buf[len - 1] == '\r')) --len;
+  buf[len] = '\0';
 
-  // Allow nonfatal messages to print a simple newline without prefix.
-  if (*message || lev == OK_FATAL_LEVEL) {
+  // Allow one leading blank line before log text
+  auto const* start = buf;
+  if (*start == '\n' || *start == '\r') {
+    do { ++start; } while (*start == '\n' || *start == '\r');
+    log_output->println();
+  }
+
+  // Allow blank nonerror log lines with no prefix
+  if (*start == '\0' && lev <= OK_NOTE_LEVEL) {
+    log_output->println();
+  } else {
     // Print log prefix
     log_output->print(now * 1e-3f, 3);
     switch (lev) {
@@ -67,11 +78,12 @@ void ok_logv(char const* tag, OkLoggingLevel lev, char const* f, va_list args) {
       log_output->print("] ");
     }
     if (lev == OK_FATAL_LEVEL) log_output->print("FATAL ");
+    if (lev >= OK_ERROR_LEVEL && *start == '\0') log_output->print("ERROR");
+    log_output->println(start);
   }
 
-  log_output->println(message);
-
   if (buf != stack_buf) free(buf);
+
   if (lev == OK_FATAL_LEVEL) {
     log_output->println("  🚨 REBOOT IN 1 SEC 🚨\n");
     log_output->flush();
@@ -162,7 +174,7 @@ static OkLoggingLevel min_level_for_tag(char const* tag) {
 
   // Find the "tag=level,..." entry that matches the given tag
   char const* config_end = ok_logging_config + strlen(ok_logging_config);
-  char const* tag_end = tag + strlen(tag);
+  char const* tag_end = tag ? tag + strlen(tag) : nullptr;
   char const* pos = ok_logging_config;
   while (true) {
     char const* entry = pos;
