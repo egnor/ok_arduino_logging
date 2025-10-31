@@ -29,6 +29,7 @@ These would be nice but are NOT currently supported:
 - custom formatting of log lines
 - routing to multiple destinations (eg. sd card + serial)
 - management/prevention of I/O blocking from logging
+- management/prevention of repeated log-spam
 - thread or ISR safety guarantees
 
 ## Minimal example
