@@ -6,7 +6,7 @@ uv = "latest"
 # https://github.com/houseabsolute/ubi/issues/142
 [tools."ubi:wokwi/wokwi-cli"]
 matching_regex = "wokwi-cli-linuxstatic-x64"
-version = "0.18.0"
+version = "0.18.3"
 
 [settings]
 experimental = true
