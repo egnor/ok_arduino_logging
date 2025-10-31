@@ -93,6 +93,6 @@ When no rule matches a tag, or there is no configuration, the default is `NOTE` 
 
 ## Considerations
 
-Logging macros synchronously write to the output object (`Serial` by default). On most Arduino runtimes, serial output is thread-safe but not interrupt-safe.
+Logging macros synchronously write to the output object (`Serial` by default) which can mess with timing. On most Arduino runtimes, serial output is thread-safe but not interrupt-safe.
 
 The logging formatter attempts to use a 128-byte stack buffer first (so 128 bytes should be available on the stack), if the message would exceed that size a dynamically allocated buffer is used, if allocation fails an error message is printed instead.
