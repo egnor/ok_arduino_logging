@@ -38,6 +38,7 @@ These would be nice but are NOT currently supported:
 #include <ok_logging.h>
 
 static OkLoggingContext OK_CONTEXT("my_app");
+static int loop_count;
 
 void setup() {
   Serial.begin(115200);  // or whatever
@@ -46,21 +47,21 @@ void setup() {
 }
 
 void loop() {
-  OK_NOTE("In loop!");
+  OK_NOTE("In loop! Counter=%d", loop_count);
   delay(500);
+  ++loop_count;
 }
 ```
 
-> [!NOTE]
-> An `OkLoggingContext` object named `OK_CONTEXT` must be in scope for any logging macro use. This is typically a file-scoped static global, as above. The constructor takes the tag to use.
+Note, an `OkLoggingContext` object named `OK_CONTEXT` must be in scope for any logging macro use. This is typically a file-scoped static global, as above. The constructor takes the log tag (any string, or `nullptr`) for logging statements in this scope.
 
 This example generates output like the following:
 
 ```
 0.524 [my_app] In setup!
 0.525 ⚠️ [my_app] Oh no, an error happened!
-0.526 [my_app] In loop!
-1.996 [my_app] In loop!
+0.526 [my_app] In loop! Counter=0
+1.996 [my_app] In loop! Counter=1
 
 ```
 
