@@ -4,7 +4,7 @@ Simple diagnostic printf logging for Arduino-ish code on 32-bit+ processors, wit
 
 You should first consider these more established libraries:
 - [Arduino-Log](https://github.com/JSC-TechMinds/Arduino-Log) - level filtering, printf formatting, multiple `Print` outputs
-- [arduino-logger](https://github.com/embeddedartistry/arduino-logger) - level filtering, printf formatting, ISR-safe, many buffer/output choices, some of which support numbered subsystem tags
+- [arduino-logger](https://github.com/embeddedartistry/arduino-logger) - level filtering, printf formatting, ISR-safe, many implementation choices
 - [DebugLog](https://github.com/hideakitai/DebugLog) - level filtering, argument formatting, `Stream` and/or file output
 - [EasyLogger](https://github.com/x821938/EasyLogger) - level filtering, tag ("service") filtering, any `Print` output
 - [ESPLogger](https://github.com/kuslota/esplogger) - per-logger level filtering, no formatting, serial output
@@ -84,10 +84,10 @@ Logs are filtered with a global configuration string, which can be set one of tw
 Either way, the configuration string is a comma-separated series of `tagpattern=level` rules, where `tagpattern` is a log tag (as set in `OK_CONTEXT`) with optional `*` wildcards, and `level` is one of `DETAIL`, `NOTE`, `ERROR`, or `FATAL`. A bare level name with no `=` is equivalent to `*=level`. For each log tag, the first matching rule is used as the minimum level to print.
 
 For example, the configuration "`foo=DETAIL,bar=ERROR,baz.*=NOTE,FATAL`":
-- shows all messages tagged "`foo`"
-- only `ERROR` or `FATAL` messages tagged "`bar`"
-- `NOTE` or higher for any tag starting with "`baz.`" (eg. "`baz.blah`", but not "`baz`" with no period)
-- only `FATAL` messages for any other tag
+- prints all logs tagged "`foo`"
+- prints `ERROR` or `FATAL` logs tagged "`bar`"
+- prints non-`DETAIL` logs with a tag starting with "`baz.`" (eg. "`baz.blah`" but not plain "`baz`"), 
+- only prints `FATAL` logs with any other tag
 
 When no rule matches a tag, or there is no configuration, the default is `NOTE` (everything but `DETAIL`).
 
