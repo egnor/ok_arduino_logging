@@ -1,4 +1,4 @@
-# ok_arduino_logging
+# OK Logging for Arduino
 
 Simple diagnostic printf logging for Arduino-ish code on 32-bit+ processors, with support for tagging and per-tag level filtering.
 
