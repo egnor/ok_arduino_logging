@@ -7,12 +7,13 @@ You should first consider these more established libraries:
 - [arduino-logger](https://github.com/embeddedartistry/arduino-logger) - level filtering, printf formatting, ISR-safe, many implementation choices
 - [DebugLog](https://github.com/hideakitai/DebugLog) - level filtering, argument formatting, `Stream` and/or file output
 - [EasyLogger](https://github.com/x821938/EasyLogger) - level filtering, tag ("service") filtering, any `Print` output
-- [ESPLogger](https://github.com/kuslota/esplogger) - per-logger level filtering, no formatting, serial output
+- [ESPLogger](https://github.com/kuslota/esplogger) - logger-object level filtering, no formatting, serial output
 - [Logger](https://github.com/bakercp/Logger) - level filtering, no formatting, serial output or custom function
-- [MycilaLogger](https://github.com/mathieucarbou/MycilaLogger) - per-logger level filtering, printf formatting, multiple `Print` outputs, ESP32 only
+- [MycilaLogger](https://github.com/mathieucarbou/MycilaLogger) - logger-object level filtering, printf formatting, multiple `Print` outputs, ESP32 only
+- [roo_logging](https://github.com/dejwk/roo_logging) - level filtering, per-tag verbosity, iostreams formatting, serial output
 - [SerialLogger](https://github.com/UltiBlox/SerialLogger) - combined data/diagnostic logging, no formatting, level filtering, serial output
 
-This library (ok_arduino_logging) adds **centrally configured string-tag log level filtering**: Each source file define a tag string which is added to logs from that file. The main app/sketch is compiled with a filter expression for tags and log levels, so you can easily dial verbosity up and down for the app or subsystems without modifying code.
+This library (ok_arduino_logging) adds **centrally configured string-tag log level filtering**: Each source file define a tag string which is added to logs from that file. The main app/sketch is compiled with a filter expression for tags and log levels, so you can dial verbosity up and down for per subsystem without modifying library code or rebuilding the world.
 
 Log tags are free form strings: they can be the source file name, a logical subsystem name, the name of a library, or whatever else makes sense for filtering. Multiple source files can use the same tag, and tags can be localized to classes or functions. Filter expressions can use `*` wildcards for tag matching to allow for structured tags (like `network.http.parser`).
 
