@@ -12,3 +12,8 @@ build/
 *.tmp                                                                           
 .idea/
 .vscode/                                                                        
+
+# Python
+*.egg-info
+*.pyc
+__pycache__/

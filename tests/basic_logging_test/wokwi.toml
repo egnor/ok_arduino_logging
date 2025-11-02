@@ -1,3 +1,0 @@
-[wokwi]
-version = 1
-firmware = 'build/esp32.esp32.esp32/basic_logging_test.ino.bin'
