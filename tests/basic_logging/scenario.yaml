@@ -1,14 +1,5 @@
 name: basic logging test
 version: 1
 steps:
-  - wait-serial: '[log_tag] Note message'
-  - wait-serial: '[log_tag] Note with newlines before and after'
-  - wait-serial: '[log_tag] Note with'
-  - wait-serial: 'newlines in the'
-  - wait-serial: 'middle'
-  - wait-serial: '⚠️ [log_tag] Error message'
-  - wait-serial: '⚠️ [log_tag] ERROR'
-  - wait-serial: '⚠️ [log_tag] Error with newlines before and after'
-  - wait-serial: '💥 [log_tag] FATAL Fatal message'
-  - wait-serial: 'basic_logging_test.ino:'
-  - wait-serial: 'abort() was called'
+  # capture one boot loop; the python test checks the serial output log
+  - wait-serial: 'Rebooting...'

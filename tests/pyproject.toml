@@ -10,6 +10,7 @@ dependencies = [
   "ok-logging-setup>=0.2",
   "ok-subprocess-defaults>=0.1",
   "pytest>=8.4.2",
+  "re-assert>=1.1.0",
 ]
 
 [tool.pytest.ini_options]
