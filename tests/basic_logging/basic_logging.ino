@@ -4,6 +4,7 @@ OkLoggingContext OK_CONTEXT("log_tag");
 
 void setup() {
   Serial.begin(115200);
+  Serial.println("BEGIN-TEST");
   OK_DETAIL("Detail message");
   OK_DETAIL("");
   OK_NOTE("Note message");
@@ -17,6 +18,6 @@ void setup() {
 }
 
 void loop() {
-  Serial.println("FAIL");  // should not be reached
+  Serial.println("TEST-FAIL");  // should not be reached
   delay(1000);
 }

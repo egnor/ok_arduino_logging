@@ -7,10 +7,9 @@ version = "0.1"
 requires-python = ">=3.12"
 
 dependencies = [
-  "ok-logging-setup>=0.2",
+  "ok-logging-setup>=0.10",
   "ok-subprocess-defaults>=0.1",
   "pytest>=8.4.2",
-  "re-assert>=1.1.0",
 ]
 
 [tool.pytest.ini_options]
