@@ -87,10 +87,10 @@ Logs are filtered with a global configuration string, which can be set one of tw
 Either way, the configuration string is a comma-separated series of `tagpattern=level` rules, where `tagpattern` is a log tag (as set in `OK_CONTEXT`) with optional `*` wildcards, and `level` is one of `DETAIL`, `NOTE`, `ERROR`, or `FATAL`. A bare level name with no `=` is equivalent to `*=level`. For each log tag, the first matching rule is used as the minimum level to print.
 
 For example, the configuration `foo=DETAIL,bar=ERROR,baz.*=NOTE,FATAL`:
-- prints all logs tagged `foo`
-- prints `ERROR` or `FATAL` logs tagged `bar`
-- prints non-`DETAIL` logs with a tag starting with `baz.` (eg. `baz.blah` but not plain `baz`), 
-- only prints `FATAL` logs with any other tag
+- for the tag `foo`, prints all logs
+- for the tag `bar`, prints `ERROR` or `FATAL` logs
+- for any tag starting with `baz.`, prints non-`DETAIL` logs (includes `baz.blah` but not `baz`), 
+- for any other tag, only prints `FATAL` logs
 
 When no rule matches a tag, or there is no configuration, the default is `NOTE` (everything but `DETAIL`).
 
