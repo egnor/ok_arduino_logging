@@ -13,11 +13,11 @@ You should first consider these more established libraries:
 - [roo_logging](https://github.com/dejwk/roo_logging) - level filtering, per-tag verbosity, iostreams formatting, serial output
 - [SerialLogger](https://github.com/UltiBlox/SerialLogger) - combined data/diagnostic logging, no formatting, level filtering, serial output
 
-This library (ok_arduino_logging) adds **centrally configured string-tag log level filtering**: Each source file define a tag string which is added to logs from that file. The main app/sketch is compiled with a filter expression for tags and log levels, so you can dial verbosity up and down for per subsystem without modifying library code or rebuilding the world.
+This library (ok_arduino_logging) offers **centrally configured string-tag log level filtering**: Each source file defines a "tag" for that file's logs. The main app/sketch includes a filter expression for tags and log levels, so you can dial verbosity up and down for per subsystem without modifying library code or rebuilding the world.
 
-Log tags are free form strings: they can be the source file name, a logical subsystem name, the name of a library, or whatever else makes sense for filtering. Multiple source files can use the same tag, and tags can be localized to classes or functions. Filter expressions can use `*` wildcards for tag matching to allow for structured tags (like `network.http.parser`).
+Log tags are free form strings: they can be source file names, logical subsystem names, library names, or whatever else makes sense for filtering. Multiple source files can use the same tag, and tags can be localized to classes or functions. Filter expressions can use `*` wildcards to allow for structured tags (eg. `network.*` matching `network.http.parser`).
 
-Importantly, libraries can use tags (often the library name, maybe with suffixes) so the app can tweak per-library log verbosity without modifying library code.
+Importantly, if library code uses log tags, the main app can tweak per-library log verbosity without modifying library code.
 
 Other niceties include:
 - printf formatting (arguments aren't evaluated if the log is suppressed)
@@ -63,7 +63,7 @@ This example generates output like the following:
 0.525 ⚠️ [my_app] Oh no, an error happened!
 0.526 [my_app] In loop! Counter=0
 1.996 [my_app] In loop! Counter=1
-
+...
 ```
 
 ## Reference
