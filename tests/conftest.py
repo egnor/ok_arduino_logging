@@ -9,7 +9,7 @@ ok_logging_setup.install({"OK_LOGGING_OUTPUT": "stdout"})
 ok_logging_setup.skip_traceback_for(subprocess.CalledProcessError)
 
 @pytest.fixture(scope="module")
-def sim_output_dir(request):
+def wokwi_output_dir(request):
     sketch_dir = Path(request.path).parent
     output_dir = sketch_dir / "output.tmp"
     if output_dir.is_dir(): shutil.rmtree(output_dir)

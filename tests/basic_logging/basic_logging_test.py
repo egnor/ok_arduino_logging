@@ -1,6 +1,6 @@
 import re
 
-def test_basic_logging(sim_output_dir):
+def test_basic_logging(wokwi_output_dir):
     expected_line_regexs = [
         r"[\d.]+ \[log_tag\] Note message",
         r"",
@@ -19,7 +19,7 @@ def test_basic_logging(sim_output_dir):
         r"  🚨 REBOOT IN 1 SEC 🚨",
     ]
 
-    log_lines = (sim_output_dir / "serial_log.txt").read_text().splitlines()
+    log_lines = (wokwi_output_dir / "serial_log.txt").read_text().splitlines()
     start_index = log_lines.index("BEGIN-TEST")
     for i, expected_regex in enumerate(expected_line_regexs):
         assert re.fullmatch(expected_regex, log_lines[start_index + 1 + i])
