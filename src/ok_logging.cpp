@@ -4,33 +4,29 @@
 #include <cstdlib>
 #include <cstring>
 
-// TODO: consider thread safety?
-static Print* log_output = &Serial;
-
-static OkLoggingLevel global_minimum = OK_DETAIL_LEVEL;
-
 static OkLoggingLevel min_level_for_tag(char const*);
+static OkLoggingFunction default_logging_function;
+
+// Exposed globals
+OkLoggingLevel ok_logging_minimum = OK_DETAIL_LEVEL;
+Print* ok_logging_stream = &Serial;
+OkLoggingFunction* ok_logging_function = &default_logging_function;
 
 OkLoggingContext::OkLoggingContext(char const* tag)
   : tag(tag), min(min_level_for_tag(tag)) {}
 
-void set_ok_logging_output(Print* output) { log_output = output; }
-
-void ok_log(char const* tag, OkLoggingLevel lev, char const* f, ...) {
-  va_list args;
-  va_start(args, f);
-  ok_logv(tag, lev, f, args);
-  va_end(args);
+void ok_log(char const* tag, OkLoggingLevel lev, char const* fmt, ...) {
+  va_list va;
+  va_start(va, fmt);
+  ok_logv(tag, lev, fmt, va);
+  va_end(va);
 }
 
-void ok_logv(char const* tag, OkLoggingLevel lev, char const* f, va_list args) {
-  if (log_output == nullptr) return;
-  if (lev < global_minimum) return;
-  auto const now = millis();  // May roll over; only used for printing
-
+void ok_logv(char const* tag, OkLoggingLevel lev, char const* fmt, va_list va) {
+  auto const t = millis();
   char stack_buf[128];
   char* buf = stack_buf;
-  auto len = vsnprintf(buf, sizeof(stack_buf), f, args);
+  auto len = vsnprintf(buf, sizeof(stack_buf), fmt, va);
   if (len < 0) {
     buf = strncpy(stack_buf, "[log formatting error]", sizeof(stack_buf));
     len = strlen(buf);
@@ -40,7 +36,7 @@ void ok_logv(char const* tag, OkLoggingLevel lev, char const* f, va_list args) {
       buf = strncpy(stack_buf, "[log allocation error]", sizeof(stack_buf));
       len = strlen(buf);
     } else {
-      auto len2 = vsnprintf(buf, len + 1, f, args);
+      auto len2 = vsnprintf(buf, len + 1, fmt, va);
       if (len2 != len) {
         free(buf);
         buf = strncpy(stack_buf, "[log reformatting error]", sizeof(stack_buf));
@@ -49,53 +45,55 @@ void ok_logv(char const* tag, OkLoggingLevel lev, char const* f, va_list args) {
     }
   }
 
-  // Trim trailing newlines
+  // Trim trailing newlines before calling logging output function
   while (len > 0 && (buf[len - 1] == '\n' || buf[len - 1] == '\r')) --len;
   buf[len] = '\0';
+  ok_logging_function(tag, lev, t, buf);
+  if (buf != stack_buf) free(buf);
+}
 
-  // Allow one leading blank line before log text
-  auto const* start = buf;
+static void default_logging_function(
+  char const* tag, OkLoggingLevel lev, uint32_t millis, char const* text
+) {
+  if (ok_logging_stream == nullptr) return;
+
+  // Allow one leading blank line before log text (suppress any others)
+  auto const* start = text;
   if (*start == '\n' || *start == '\r') {
     do { ++start; } while (*start == '\n' || *start == '\r');
-    log_output->println();
+    ok_logging_stream->println();
   }
 
   // Allow blank nonerror log lines with no prefix
   if (*start == '\0' && lev <= OK_NOTE_LEVEL) {
-    log_output->println();
+    ok_logging_stream->println();
   } else {
     // Print log prefix
-    log_output->print(now * 1e-3f, 3);
+    ok_logging_stream->print(millis * 1e-3f, 3);
     switch (lev) {
-      case OK_FATAL_LEVEL: log_output->print(" 💥 "); break;
-      case OK_ERROR_LEVEL: log_output->print(" ⚠️ "); break;
-      case OK_NOTE_LEVEL: log_output->print(" "); break;
-      case OK_DETAIL_LEVEL: log_output->print(" 🕸️ "); break;
+      case OK_FATAL_LEVEL: ok_logging_stream->print(" 💥 "); break;
+      case OK_ERROR_LEVEL: ok_logging_stream->print(" ⚠️ "); break;
+      case OK_NOTE_LEVEL: ok_logging_stream->print(" "); break;
+      case OK_DETAIL_LEVEL: ok_logging_stream->print(" 🕸️ "); break;
     }
     if (tag != nullptr && tag[0] != '\0') {
-      log_output->print("[");
-      log_output->print(tag);
-      log_output->print("] ");
+      ok_logging_stream->print("[");
+      ok_logging_stream->print(tag);
+      ok_logging_stream->print("] ");
     }
-    if (lev == OK_FATAL_LEVEL) log_output->print("FATAL ");
-    if (lev >= OK_ERROR_LEVEL && *start == '\0') log_output->print("ERROR");
-    log_output->println(start);
+    if (lev == OK_FATAL_LEVEL) ok_logging_stream->print("FATAL ");
+    if (lev >= OK_ERROR_LEVEL && *start == '\0') {
+      ok_logging_stream->print("ERROR");
+    }
+    ok_logging_stream->println(start);
   }
 
-  if (buf != stack_buf) free(buf);
-
   if (lev == OK_FATAL_LEVEL) {
-    log_output->println("  🚨 REBOOT IN 1 SEC 🚨\n");
-    log_output->flush();
+    ok_logging_stream->println("  🚨 REBOOT IN 1 SEC 🚨\n");
+    ok_logging_stream->flush();
     delay(1000);
     abort();
   }
-}
-
-OkLoggingLevel set_ok_logging_global_minimum(OkLoggingLevel level) {
-  auto const old_level = global_minimum;
-  global_minimum = level;
-  return old_level;
 }
 
 static char const* next_of(char const* p, char const* end, char const* m) {

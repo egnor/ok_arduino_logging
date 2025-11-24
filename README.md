@@ -27,8 +27,6 @@ Other niceties include:
 - [basic unit tests](tests) (!!) using [wokwi](https://wokwi.com/)
 
 These would be nice but are NOT currently supported:
-- custom formatting of log lines
-- routing to multiple destinations (eg. sd card + serial)
 - management/prevention of I/O blocking from logging
 - management/prevention of repeated log-spam
 - thread or ISR safety guarantees
@@ -75,8 +73,6 @@ Several macros and functions are defined in `<ok_logging.h>`
 - `OK_FATAL(fmt, ...)` - highest priority, aborts and reboots
 - `OK_FATAL_IF(cond)` - if `cond` is `true`, logs source location and `#cond`, aborts and reboots
 - `OK_ERROR_IF(cond)` - if `cond` is `true`, logs source location and `#cond`; returns `cond` either way
-- `set_ok_logging_output(output)` - redirects logs to a `Print*` stream (`&Serial` by default)
-- `set_ok_logging_global_minimum(level)` - sets a global minimum level to print, and returns the old global minimum level (default `OK_DETAIL_LEVEL`)
 
 ## Log verbosity configuration
 
@@ -93,6 +89,12 @@ For example, the configuration `foo=DETAIL,bar=ERROR,baz.*=NOTE,FATAL`:
 - for any other tag, only prints `FATAL` logs
 
 When no rule matches a tag, or there is no configuration, the default is `NOTE` (everything but `DETAIL`).
+
+## Other configuration
+
+- Assign `ok_logging_minimum` for an additional global squelch (default `OK_DETAIL_LEVEL`, no squelch)
+- Assign a `Print*` stream to `ok_logging_stream` to redirect output (`&Serial` by default)
+- Assign your own function to `ok_logging_function` to change output strategy entirely (see the header)
 
 ## Considerations
 
