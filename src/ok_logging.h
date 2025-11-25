@@ -61,9 +61,14 @@ extern OkLoggingLevel ok_logging_minimum;
 // Assign to change the logging output Stream, default &Serial
 extern Print* ok_logging_stream;
 
-// Assign to change the print style and/or log to a non-Stream
+// Assign to your own function to redefine logging strategy entirely.
+// The function is called after filtering and printf argument formatting:
+//   tag - name of tag generating the log message
+//   lev - logging level of message
+//   ts - millis() timestamp on first processing log
+//   text - log message after printf argument formatting is done
 using OkLoggingFunction =
-    void(char const* tag, OkLoggingLevel, uint32_t, char const* text);
+    void(char const* tag, OkLoggingLevel lev, uint32_t ts, char const* text);
 extern OkLoggingFunction* ok_logging_function;
 
 //
