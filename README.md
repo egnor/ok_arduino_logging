@@ -24,7 +24,7 @@ Other niceties include:
 - assert-like `OK_ERROR_IF(...)` and `OK_FATAL_IF(...)` macros for convenience
 - source file, line, and function reporting for fatal and assert-check errors, but not others
 - compact emoji representations of log levels
-- [basic unit tests](tests) (!!) using [wokwi](https://wokwi.com/)
+- [unit tests](tests) (!!) using [wokwi](https://wokwi.com/)
 
 These would be nice but are NOT currently supported:
 - management/prevention of I/O blocking from logging
@@ -66,7 +66,7 @@ This example generates output like the following:
 
 ## Reference
 
-Several macros and functions are defined in `<ok_logging.h>`
+Logging macros are defined in `<ok_logging.h>`
 - `OK_DETAIL(fmt, ...)` - lowest priority level
 - `OK_NOTE(fmt, ...)` - "normal" priority level
 - `OK_ERROR(fmt, ...)` - elevated priority, indicates a problem
@@ -94,7 +94,16 @@ When no rule matches a tag, or there is no configuration, the default is `NOTE` 
 
 - Assign `ok_logging_minimum` for an additional global squelch (default `OK_DETAIL_LEVEL`, no squelch)
 - Assign a `Print*` stream to `ok_logging_stream` to redirect output (`&Serial` by default)
-- Assign your own function to `ok_logging_function` to change output strategy entirely (see the header)
+- Assign your own function to `ok_logging_function` to redefine output entirely (see `OkLoggingFunction` in [`ok_logging.h`](src/ok_logging.h))
+
+## Serial port helper
+
+As a utility helper, `ok_serial_begin()` is a wrapper to `Serial.begin(...)` with extra features:
+- baud rate defaults to 115200, which is what you probably want
+- if possible, detects if USB data is connected; if so, waits a few seconds for a USB serial connection
+- takes options to set baud, buffer sizes, or output blocking (see `OkLoggingSerialOptions` in [`ok_logging.h`](src/ok_logging.h))
+
+This is entirely optional and unrelated to logging per se (except that logging uses `Serial` by default).
 
 ## Considerations
 
