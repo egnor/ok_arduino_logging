@@ -49,6 +49,7 @@ void ok_logv(char const* tag, OkLoggingLevel lev, char const* fmt, va_list va) {
   while (len > 0 && (buf[len - 1] == '\n' || buf[len - 1] == '\r')) --len;
   buf[len] = '\0';
   ok_logging_function(tag, lev, t, buf);
+  if (lev == OK_FATAL_LEVEL) { delay(1000); abort(); }
   if (buf != stack_buf) free(buf);
 }
 
@@ -90,9 +91,7 @@ static void default_logging_function(
 
   if (lev == OK_FATAL_LEVEL) {
     ok_logging_stream->println("  🚨 REBOOT IN 1 SEC 🚨\n");
-    ok_logging_stream->flush();
-    delay(1000);
-    abort();
+    ok_logging_stream->flush();  // will delay() & abort() back in ok_logv()
   }
 }
 

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#ifdef ESP32
+#ifdef ARDUINO_ARCH_ESP32
 
   #include <esp_err.h>
 
@@ -21,4 +21,4 @@
         OK_FATAL("%s (%d)\nfrom: %s", esp_err_to_name(rc_), rc_, #x); \
     })
 
-#endif  // ESP32
+#endif  // ARDUINO_ARCH_ESP32

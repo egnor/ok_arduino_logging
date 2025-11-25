@@ -1,5 +1,5 @@
-name: basic logging
+name: set logging stream
 version: 1
 steps:
   # capture one run; the python test checks the serial output log
-  - wait-serial: 'Rebooting...'
+  - wait-serial: 'REBOOT'

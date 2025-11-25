@@ -1,4 +1,4 @@
-name: basic logging
+name: set logging function
 version: 1
 steps:
   # capture one run; the python test checks the serial output log

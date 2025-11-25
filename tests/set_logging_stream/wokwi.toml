@@ -1,0 +1,3 @@
+[wokwi]
+version = 1
+firmware = 'output.tmp/set_logging_stream.ino.bin'

@@ -1,0 +1,3 @@
+[wokwi]
+version = 1
+firmware = 'output.tmp/serial_begin_esp32_nonusb.ino.bin'

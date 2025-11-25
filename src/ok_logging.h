@@ -65,3 +65,19 @@ extern Print* ok_logging_stream;
 using OkLoggingFunction =
     void(char const* tag, OkLoggingLevel, uint32_t, char const* text);
 extern OkLoggingFunction* ok_logging_function;
+
+//
+// Cross-architecture serial initialization helper
+//
+
+struct OkLoggingSerialOptions {
+  int baud = 115200;
+  int rx_buffer_size = 0;
+  int tx_buffer_size = 0;
+  bool tx_non_blocking = false;
+  int connect_wait_millis = 5000;  // If USB data is present, wait for monitor
+};
+
+// Calls Serial.begin(opts.baud) and then applies the other settings
+// if supported by the current architecture.
+void ok_serial_begin(OkLoggingSerialOptions const& = {});

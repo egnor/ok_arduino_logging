@@ -1,6 +1,6 @@
 #include <ok_logging.h>
 
-OkLoggingContext OK_CONTEXT("log_tag");
+OkLoggingContext OK_CONTEXT("basic_logging");
 
 void setup() {
   Serial.begin(115200);

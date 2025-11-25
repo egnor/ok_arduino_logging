@@ -1,5 +1,5 @@
-name: basic logging
+name: ok_serial_begin on ESP32 (non-USB)
 version: 1
 steps:
   # capture one run; the python test checks the serial output log
-  - wait-serial: 'Rebooting...'
+  - wait-serial: 'END-TEST'

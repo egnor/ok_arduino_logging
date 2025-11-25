@@ -2,9 +2,9 @@
   "version": 1,                                                                 
   "author": "egnor",
   "editor": "wokwi",
-  "parts": [{ "id": "esp", "type": "board-esp32-devkit-c-v4" }],
+  "parts": [{ "id": "pico", "type": "wokwi-pi-pico" }],
   "connections": [
-    [ "esp:TX", "$serialMonitor:RX", "" ],
-    [ "esp:RX", "$serialMonitor:TX", "" ]
+    [ "pico:GP0", "$serialMonitor:RX", "" ],
+    [ "pico:GP1", "$serialMonitor:TX", "" ]
   ]
 }

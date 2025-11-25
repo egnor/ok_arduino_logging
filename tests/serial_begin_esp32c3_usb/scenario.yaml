@@ -1,0 +1,5 @@
+name: ok_serial_begin on ESP32-C3 (USB)
+version: 1
+steps:
+  # capture one boot loop; the python test checks the serial output log
+  - wait-serial: 'END-TEST'
