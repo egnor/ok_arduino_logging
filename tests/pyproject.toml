@@ -13,5 +13,6 @@ dependencies = [
 ]
 
 [tool.pytest]
-norecursedirs = ["*.tmp"]
 log_level = "CRITICAL"  # logs end up in stdout per conftest.py
+norecursedirs = ["*.tmp"]
+strict = true
