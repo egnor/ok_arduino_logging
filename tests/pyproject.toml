@@ -14,6 +14,4 @@ dependencies = [
 
 [tool.pytest.ini_options]
 norecursedirs = ["*.tmp"]
-log_date_format = "%H:%M:%S"
-log_format = "%(asctime)s %(levelname)s %(message)s"
-log_level = "WARNING"
+log_level = "CRITICAL"  # logs end up in stdout per conftest.py
