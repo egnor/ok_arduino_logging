@@ -45,8 +45,8 @@ void ok_logv(char const* tag, OkLoggingLevel lev, char const* fmt, va_list va) {
     }
   }
 
-  // Trim trailing newlines before calling logging output function
-  while (len > 0 && (buf[len - 1] == '\n' || buf[len - 1] == '\r')) --len;
+  // Trim trailing whitespace before calling logging output function
+  while (len > 0 && strchr(" \t\r\n", buf[len - 1])) --len;
   buf[len] = '\0';
   ok_logging_function(tag, lev, t, buf);
   if (lev == OK_FATAL_LEVEL) { delay(1000); abort(); }
@@ -86,11 +86,22 @@ static void default_logging_function(
     if (lev >= OK_ERROR_LEVEL && *start == '\0') {
       ok_logging_stream->print("ERROR");
     }
-    ok_logging_stream->println(start);
+
+    // Convert any CR/LF combination into println() (CR+LF)
+    do {
+      char const* eol = start;
+      while (*eol && *eol != '\r' && *eol != '\n') ++eol;
+      ok_logging_stream->write(start, eol - start);
+      ok_logging_stream->println();
+      if (*eol == '\r') ++eol;
+      if (*eol == '\n') ++eol;
+      start = eol;
+    } while (*start != '\0');
   }
 
   if (lev == OK_FATAL_LEVEL) {
-    ok_logging_stream->println("  🚨 REBOOT IN 1 SEC 🚨\n");
+    ok_logging_stream->println("  🚨 REBOOT IN 1 SEC 🚨");
+    ok_logging_stream->println();
     ok_logging_stream->flush();  // will delay() & abort() back in ok_logv()
   }
 }
@@ -128,8 +139,8 @@ static bool glob_match(
 }
 
 static void trim(char const** p, char const** end) {
-  while (*p < *end && strchr(" \t\n", **p)) ++*p;
-  while (*p < *end && strchr(" \t\n", (*end)[-1])) --*end;
+  while (*p < *end && strchr(" \t\r\n", **p)) ++*p;
+  while (*p < *end && strchr(" \t\r\n", (*end)[-1])) --*end;
 }
 
 static OkLoggingLevel level_for_name(char const* level, char const* end) {
@@ -161,7 +172,7 @@ static OkLoggingLevel level_for_name(char const* level, char const* end) {
   }
 
   ok_log(
-      "ok_logging", OK_ERROR_LEVEL, "Bad level \"%.*s\" in config:\n  %s",
+      "ok_logging", OK_ERROR_LEVEL, "Bad level \"%.*s\" in config:\r\n  %s",
       end - level, level, ok_logging_config);
   return OK_DETAIL_LEVEL;
 }
@@ -187,7 +198,7 @@ static OkLoggingLevel min_level_for_tag(char const* tag) {
     trim(&level, &level_end);
     if (glob == glob_end || level == level_end) {
       ok_log(
-          "ok_logging", OK_ERROR_LEVEL, "Bad entry \"%.*s\" in config:\n  %s",
+          "ok_logging", OK_ERROR_LEVEL, "Bad entry \"%.*s\" in config:\r\n  %s",
           level_end - glob, glob, ok_logging_config);
     } else if (glob_match(glob, glob_end, tag, tag_end)) {
       return level_for_name(level, level_end);

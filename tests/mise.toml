@@ -17,7 +17,7 @@ ARDUINO_DIRECTORIES_DATA = "{{config_root}}/build.tmp/arduino"
 ARDUINO_LIBRARY_ENABLE_UNSAFE_INSTALL = "true"
 WOKWI_CLI_TOKEN = "wok_nJuRmrgvs52tPLL16u4MwPF20ciN0pd04da34089"
 
-_.python.venv = { path = "build.tmp/python_venv", create = true }
+_.python.venv = { path = "{{env.UV_PROJECT_ENVIRONMENT}}" }
 UV_PROJECT_ENVIRONMENT = "{{config_root}}/build.tmp/python_venv"
 
 [hooks]
