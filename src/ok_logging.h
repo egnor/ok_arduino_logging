@@ -61,6 +61,11 @@ extern OkLoggingLevel ok_logging_minimum;
 // Assign to change the logging output Stream, default &Serial
 extern Print* ok_logging_stream;
 
+// If nonzero, prints "BUF FULL" instead of blocking if
+// ok_logging_stream->availableForWrite() would fall below this level (eg. 32).
+// You'll want a decent buffer (4K+), see ok_serial_begin's tx_buffer_size.
+extern int ok_logging_headroom;
+
 // Assign to your own function to redefine logging strategy entirely.
 // The function is called after filtering and printf argument formatting:
 //   tag - name of tag generating the log message

@@ -10,6 +10,7 @@ static OkLoggingFunction default_logging_function;
 // Exposed globals
 OkLoggingLevel ok_logging_minimum = OK_DETAIL_LEVEL;
 Print* ok_logging_stream = &Serial;
+int ok_logging_headroom = 0;
 OkLoggingFunction* ok_logging_function = &default_logging_function;
 
 OkLoggingContext::OkLoggingContext(char const* tag)
@@ -53,11 +54,9 @@ void ok_logv(char const* tag, OkLoggingLevel lev, char const* fmt, va_list va) {
   if (buf != stack_buf) free(buf);
 }
 
-static void default_logging_function(
+static void print_log_entry(
   char const* tag, OkLoggingLevel lev, uint32_t millis, char const* text
 ) {
-  if (ok_logging_stream == nullptr) return;
-
   // Allow one leading blank line before log text (suppress any others)
   auto const* start = text;
   if (*start == '\n' || *start == '\r') {
@@ -104,6 +103,35 @@ static void default_logging_function(
     ok_logging_stream->println();
     ok_logging_stream->flush();  // will delay() & abort() back in ok_logv()
   }
+}
+
+static void default_logging_function(
+  char const* tag, OkLoggingLevel lev, uint32_t millis, char const* text
+) {
+  if (ok_logging_stream == nullptr) return;
+
+  // FATAL always emits (and flush()/abort()s); backpressure check otherwise.
+  // Static state tracks whether we've already noted the current drop run.
+  static bool buffer_full = false;  // Only print one FULL until clear
+  int const headroom = ok_logging_headroom;
+  if (lev != OK_FATAL_LEVEL && headroom > 0) {
+    int const avail = ok_logging_stream->availableForWrite();
+    // Conservative upper bound: each input byte produces at most 2 output
+    // bytes (\n -> \r\n), plus a generous prefix budget.
+    int const needed = 2 * (int) strlen(text) + 64 +
+        (tag ? (int) strlen(tag) : 0);
+    if (avail < needed + headroom) {
+      if (!buffer_full && avail >= headroom) {
+        ok_logging_stream->print(millis * 1e-3f, 3);
+        ok_logging_stream->println(" ⛔ BUF FULL");
+        buffer_full = true;
+      }
+      return;
+    }
+  }
+
+  buffer_full = false;
+  print_log_entry(tag, lev, millis, text);
 }
 
 static char const* next_of(char const* p, char const* end, char const* m) {

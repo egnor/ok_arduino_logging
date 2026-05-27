@@ -9,9 +9,11 @@
 OkLoggingContext OK_CONTEXT("serial_begin");
 
 void setup() {
-  ok_serial_begin();
+  ok_serial_begin({.tx_buffer_size = 4096});
   Serial.println("BEGIN-TEST");
   OK_NOTE("Note");
+  Serial.flush();
+  Serial.printf("TX-BUF=%d\r\n", Serial.availableForWrite());
   Serial.println("END-TEST");
 }
 

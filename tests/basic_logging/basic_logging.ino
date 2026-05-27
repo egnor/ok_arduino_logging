@@ -3,7 +3,9 @@
 OkLoggingContext OK_CONTEXT("basic_logging");
 
 void setup() {
+  Serial.setTxBufferSize(4096);
   Serial.begin(115200);
+  Serial.printf("avail: %d\n", Serial.availableForWrite());
   Serial.println("BEGIN-TEST");
   OK_DETAIL("Detail message");
   OK_DETAIL("");

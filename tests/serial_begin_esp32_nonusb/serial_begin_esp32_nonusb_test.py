@@ -3,6 +3,7 @@ import re
 def test_serial_begin_esp32_nonusb(wokwi_output_dir):
     expected_regexs = [
         r"[\d.]+ \[serial_begin\] Note",
+        r"TX-BUF=\d{4,}",  # confirms setTxBufferSize(4096) took effect
         r"END-TEST",
     ]
 

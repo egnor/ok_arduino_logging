@@ -10,7 +10,6 @@ version = "0.19.1"
 
 [settings]
 experimental = true
-python_compile = false
 
 [env]
 ARDUINO_DIRECTORIES_DATA = "{{config_root}}/build.tmp/arduino"
