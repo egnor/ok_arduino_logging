@@ -95,13 +95,6 @@ For example, the configuration `foo=DETAIL,bar=ERROR,baz.*=NOTE,FATAL`:
 
 When no rule matches a tag, or there is no configuration, the default is `NOTE` (everything but `DETAIL`).
 
-## Other configuration
-
-- Assign `ok_logging_minimum` for an additional global squelch (default `OK_DETAIL_LEVEL`, no squelch)
-- Assign a `Print*` stream to `ok_logging_stream` to redirect output (`&Serial` by default)
-- Assign your own function to `ok_logging_function` to redefine output entirely (see `OkLoggingFunction` in [`ok_logging.h`](src/ok_logging.h))
-- Set `ok_logging_non_blocking = true` to drop messages (rather than block) when the output stream's TX buffer can't fit them; see below
-
 ## Non-blocking output
 
 Setting `ok_logging_non_blocking = true` makes the default formatter check `ok_logging_stream->availableForWrite()` and drop any non-fatal message that wouldn't fit, printing a short `⏸️ BUF FULL` marker per gap. (`OK_FATAL` outputs always block.) You'll want a decent TX buffer for non-blocking logging; 4+ KB is a good start, eg. `ok_serial_begin({.tx_buffer_size = 4096})` (see below).
@@ -112,6 +105,12 @@ Caveats:
 
 - The RP2xxx Arduino core doesn't support `availableForWrite()`, and it has a small fixed output buffer, so non-blocking mode isn't useful here.
 - The ESP32 Arduino core in USB-OTG mode (not "Hardware CDC and JTAG") has a fixed TX buffer size.
+
+## Other configuration
+
+- Assign `ok_logging_minimum` for an additional global squelch (default `OK_DETAIL_LEVEL`, no squelch)
+- Assign a `Print*` stream to `ok_logging_stream` to redirect output (`&Serial` by default)
+- Assign your own function to `ok_logging_function` to redefine output entirely (see `OkLoggingFunction` in [`ok_logging.h`](src/ok_logging.h))
 
 ## Serial port helper
 
