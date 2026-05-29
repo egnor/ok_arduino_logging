@@ -10,7 +10,7 @@ You should first consider these more established libraries:
 - [EasyLogger](https://github.com/x821938/EasyLogger) - level filtering, tag ("service") filtering, any `Print` output
 - [ESPLogger](https://github.com/kuslota/esplogger) - logger-object level filtering, no formatting, serial output
 - [Logger](https://github.com/bakercp/Logger) - level filtering, no formatting, serial output or custom function
-- [MycilaLogger](https://github.com/mathieucarbou/MycilaLogger) - logger-object level filtering, printf formatting, multiple `Print` outputs, ESP32 only
+- [MycilaLogger](https://github.com/mathieucarbou/MycilaLogger) - logger-object filtering, printf formatting, multiple `Print` outputs, ESP32 only
 - [roo_logging](https://github.com/dejwk/roo_logging) - level filtering, per-tag verbosity, iostreams formatting, serial output
 - [SerialLogger](https://github.com/UltiBlox/SerialLogger) - combined data/diagnostic logging, no formatting, level filtering, serial output
 
@@ -27,11 +27,6 @@ Other niceties include:
 - source file, line, and function reporting for fatal and assert-check errors, but not others
 - compact emoji representations of log levels
 - [unit tests](tests) (!!) using [wokwi](https://wokwi.com/)
-
-These would be nice but are NOT currently supported:
-
-- management/prevention of repeated log-spam
-- thread or ISR safety guarantees
 
 ## Minimal example
 
@@ -77,7 +72,7 @@ Logging macros are defined in `<ok_logging.h>`
 - `OK_FATAL_IF(cond)` - if `cond` is `true`, logs source location and `#cond`, aborts and reboots
 - `OK_ERROR_IF(cond)` - if `cond` is `true`, logs source location and `#cond`; returns `cond` either way
 
-## Log verbosity configuration
+### Log verbosity configuration
 
 Logs are filtered with a global configuration string, which can be set one of two ways:
 
@@ -95,24 +90,31 @@ For example, the configuration `foo=DETAIL,bar=ERROR,baz.*=NOTE,FATAL`:
 
 When no rule matches a tag, or there is no configuration, the default is `NOTE` (everything but `DETAIL`).
 
-## Non-blocking output
+### Non-blocking output
 
-Setting `ok_logging_non_blocking = true` makes the default formatter check `ok_logging_stream->availableForWrite()` and drop any non-fatal message that wouldn't fit, printing a short `⏸️ BUF FULL` marker per gap. (`OK_FATAL` outputs always block.) You'll want a decent TX buffer for non-blocking logging; 4+ KB is a good start, eg. `ok_serial_begin({.tx_buffer_size = 4096})` (see below).
+By default, logging statements (`OK_ERROR`, etc) write directly to `Serial`. If logs are written faster than the serial connection (USB or UART) can keep up, the transmit buffer fills and logging statements block until data is written, slowing down your code.
 
-Non-blocking logging (`ok_logging_non_blocking = true`) differs from serial port non-blocking (`ok_serial_begin({.tk_non_blocking = true})`). Non-blocking logging prints markers and won't truncate log lines. Serial port non-blocking just drops any byte that would overflow. Use non-blocking logging if you'd rather miss logs than have timing delays. Use serial port non-blocking if you want all serial output (not just logging) to be dropped instead of blocking. If you set both, logging output should never bump into serial port truncation.
+If you set `ok_logging_non_blocking = true`, non-FATAL messages that would otherwise block are dropped, printing a `⏸️ BUF FULL` marker instead.
+
+Recommended practices for logging:
+- Keep logging volume to a dull roar; be judicious about what tags you enable.
+- For UART serial, use a high baud rate if possible. (Has no effect on USB serial.)
+- Expand the transmit buffer (eg. `ok_serial_begin({.tx_buffer_size = 4096})`, see below).
+- Set `ok_logging_non_blocking = true` whenever you're not actively debugging.
+- _Maybe also_ make the serial port itself non-blocking (eg. `ok_serial_begin({.tx_non_blocking = true})`, see below), as a cruder backstop for non-logging output (eg. direct `Serial.print(...)`).
 
 Caveats:
+- Default transmit buffers are small. Use at least 4 KB for non-blocking logging.
+- RP2xxx Arduino has a small fixed buffer and doesn't support non-blocking output.
+- ESP32 Arduino in USB-OTG mode (_not_ "Hardware CDC and JTAG") has a fixed buffer.
 
-- The RP2xxx Arduino core doesn't support `availableForWrite()`, and it has a small fixed output buffer, so non-blocking mode isn't useful here.
-- The ESP32 Arduino core in USB-OTG mode (not "Hardware CDC and JTAG") has a fixed TX buffer size.
-
-## Other configuration
+### Other configuration
 
 - Assign `ok_logging_minimum` for an additional global squelch (default `OK_DETAIL_LEVEL`, no squelch)
 - Assign a `Print*` stream to `ok_logging_stream` to redirect output (`&Serial` by default)
 - Assign your own function to `ok_logging_function` to redefine output entirely (see `OkLoggingFunction` in [`ok_logging.h`](src/ok_logging.h))
 
-## Serial port helper
+### Serial port helper
 
 As a utility helper, `ok_serial_begin()` is a wrapper to `Serial.begin(...)` with extra features:
 
@@ -124,6 +126,6 @@ This is entirely optional and unrelated to logging per se (except that logging u
 
 ## Considerations
 
-Logging macros synchronously write to the output object (`Serial` by default) which can mess with timing; see [Non-blocking output](#non-blocking-output) above for a way to drop messages instead of blocking. On most Arduino runtimes, serial output is thread-safe but not interrupt-safe.
+Logging is as thread-safe or interrupt-safe as the serial port it uses. On most Arduino runtimes, `Serial` is thread-safe but not interrupt-safe.
 
-The logging formatter attempts to use a 128-byte stack buffer first (so 128 bytes should be available on the stack), if the message would exceed that size a dynamically allocated buffer is used, if allocation fails an error message is printed instead.
+The logging formatter attempts to use a 128-byte stack buffer first (so 128 bytes should be available on the stack). For longer messages a dynamically allocated buffer is used. If allocation fails an error message is printed instead.
