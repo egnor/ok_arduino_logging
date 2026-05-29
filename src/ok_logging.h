@@ -61,10 +61,9 @@ extern OkLoggingLevel ok_logging_minimum;
 // Assign to change the logging output Stream, default &Serial
 extern Print* ok_logging_stream;
 
-// If nonzero, prints "BUF FULL" instead of blocking if
-// ok_logging_stream->availableForWrite() would fall below this level (eg. 32).
+// True to skip logging if the buffer fills. (Prints "BUF FULL" if possible.)
 // You'll want a decent buffer (4K+), see ok_serial_begin's tx_buffer_size.
-extern int ok_logging_headroom;
+extern bool ok_logging_non_blocking;
 
 // Assign to your own function to redefine logging strategy entirely.
 // The function is called after filtering and printf argument formatting:
@@ -84,7 +83,7 @@ struct OkLoggingSerialOptions {
   int baud = 115200;
   int rx_buffer_size = 0;
   int tx_buffer_size = 0;
-  bool tx_non_blocking = false;
+  bool tx_non_blocking = false;  // Drop output data instead of blocking
   int connect_wait_millis = 5000;  // If USB data is present, wait for monitor
 };
 

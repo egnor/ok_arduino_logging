@@ -3,6 +3,7 @@
 Simple diagnostic printf logging for Arduino-ish code on 32-bit+ processors, with support for tagging and per-tag level filtering.
 
 You should first consider these more established libraries:
+
 - [Arduino-Log](https://github.com/JSC-TechMinds/Arduino-Log) - level filtering, printf formatting, multiple `Print` outputs
 - [arduino-logger](https://github.com/embeddedartistry/arduino-logger) - level filtering, printf formatting, ISR-safe, many implementation choices
 - [DebugLog](https://github.com/hideakitai/DebugLog) - level filtering, argument formatting, `Stream` and/or file output
@@ -20,6 +21,7 @@ Log tags are free form strings: they can be source file names, logical subsystem
 Importantly, if library code uses log tags, the main app can tweak per-library log verbosity without modifying library code.
 
 Other niceties include:
+
 - printf formatting (arguments aren't evaluated if the log is suppressed)
 - assert-like `OK_ERROR_IF(...)` and `OK_FATAL_IF(...)` macros for convenience
 - source file, line, and function reporting for fatal and assert-check errors, but not others
@@ -27,7 +29,7 @@ Other niceties include:
 - [unit tests](tests) (!!) using [wokwi](https://wokwi.com/)
 
 These would be nice but are NOT currently supported:
-- management/prevention of I/O blocking from logging
+
 - management/prevention of repeated log-spam
 - thread or ISR safety guarantees
 
@@ -67,6 +69,7 @@ This example generates output like the following:
 ## Reference
 
 Logging macros are defined in `<ok_logging.h>`
+
 - `OK_DETAIL(fmt, ...)` - lowest priority level
 - `OK_NOTE(fmt, ...)` - "normal" priority level
 - `OK_ERROR(fmt, ...)` - elevated priority, indicates a problem
@@ -77,15 +80,17 @@ Logging macros are defined in `<ok_logging.h>`
 ## Log verbosity configuration
 
 Logs are filtered with a global configuration string, which can be set one of two ways:
+
 - Define `char const* ok_logging_config = "...";` in a source file
 - OR pass `-DOK_LOGGING_CONFIG=...` to the compiler
 
 Either way, the configuration string is a comma-separated series of `tagpattern=level` rules, where `tagpattern` is a log tag (as set in `OK_CONTEXT`) with optional `*` wildcards, and `level` is one of `DETAIL`, `NOTE`, `ERROR`, or `FATAL`. A bare level name with no `=` is equivalent to `*=level`. For each log tag, the first matching rule is used as the minimum level to print.
 
 For example, the configuration `foo=DETAIL,bar=ERROR,baz.*=NOTE,FATAL`:
+
 - for the tag `foo`, prints all logs
 - for the tag `bar`, prints `ERROR` or `FATAL` logs
-- for any tag starting with `baz.`, prints non-`DETAIL` logs (includes `baz.blah` but not `baz`), 
+- for any tag starting with `baz.`, prints non-`DETAIL` logs (includes `baz.blah` but not `baz`),
 - for any other tag, only prints `FATAL` logs
 
 When no rule matches a tag, or there is no configuration, the default is `NOTE` (everything but `DETAIL`).
@@ -95,18 +100,31 @@ When no rule matches a tag, or there is no configuration, the default is `NOTE` 
 - Assign `ok_logging_minimum` for an additional global squelch (default `OK_DETAIL_LEVEL`, no squelch)
 - Assign a `Print*` stream to `ok_logging_stream` to redirect output (`&Serial` by default)
 - Assign your own function to `ok_logging_function` to redefine output entirely (see `OkLoggingFunction` in [`ok_logging.h`](src/ok_logging.h))
+- Set `ok_logging_non_blocking = true` to drop messages (rather than block) when the output stream's TX buffer can't fit them; see below
+
+## Non-blocking output
+
+Setting `ok_logging_non_blocking = true` makes the default formatter check `ok_logging_stream->availableForWrite()` and drop any non-fatal message that wouldn't fit, printing a short `⏸️ BUF FULL` marker per gap. (`OK_FATAL` outputs always block.) You'll want a decent TX buffer for non-blocking logging; 4+ KB is a good start, eg. `ok_serial_begin({.tx_buffer_size = 4096})` (see below).
+
+Non-blocking logging (`ok_logging_non_blocking = true`) differs from serial port non-blocking (`ok_serial_begin({.tk_non_blocking = true})`). Non-blocking logging prints markers and won't truncate log lines. Serial port non-blocking just drops any byte that would overflow. Use non-blocking logging if you'd rather miss logs than have timing delays. Use serial port non-blocking if you want all serial output (not just logging) to be dropped instead of blocking. If you set both, logging output should never bump into serial port truncation.
+
+Caveats:
+
+- The RP2xxx Arduino core doesn't support `availableForWrite()`, and it has a small fixed output buffer, so non-blocking mode isn't useful here.
+- The ESP32 Arduino core in USB-OTG mode (not "Hardware CDC and JTAG") has a fixed TX buffer size.
 
 ## Serial port helper
 
 As a utility helper, `ok_serial_begin()` is a wrapper to `Serial.begin(...)` with extra features:
-- baud rate defaults to 115200, which is what you probably want
-- if possible, detects if USB data is connected; if so, waits a few seconds for a USB serial connection
-- takes options to set baud, buffer sizes, or output blocking (see `OkLoggingSerialOptions` in [`ok_logging.h`](src/ok_logging.h))
+
+- Baud rate defaults to 115200, which is what you probably want
+- If possible, detects if USB data is connected; if so, waits a few seconds for a USB serial connection
+- Takes options to set baud, buffer sizes, and output blocking (see `OkLoggingSerialOptions` in [`ok_logging.h`](src/ok_logging.h))
 
 This is entirely optional and unrelated to logging per se (except that logging uses `Serial` by default).
 
 ## Considerations
 
-Logging macros synchronously write to the output object (`Serial` by default) which can mess with timing. On most Arduino runtimes, serial output is thread-safe but not interrupt-safe.
+Logging macros synchronously write to the output object (`Serial` by default) which can mess with timing; see [Non-blocking output](#non-blocking-output) above for a way to drop messages instead of blocking. On most Arduino runtimes, serial output is thread-safe but not interrupt-safe.
 
 The logging formatter attempts to use a 128-byte stack buffer first (so 128 bytes should be available on the stack), if the message would exceed that size a dynamically allocated buffer is used, if allocation fails an error message is printed instead.

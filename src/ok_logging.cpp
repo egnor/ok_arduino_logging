@@ -10,7 +10,7 @@ static OkLoggingFunction default_logging_function;
 // Exposed globals
 OkLoggingLevel ok_logging_minimum = OK_DETAIL_LEVEL;
 Print* ok_logging_stream = &Serial;
-int ok_logging_headroom = 0;
+bool ok_logging_non_blocking = false;
 OkLoggingFunction* ok_logging_function = &default_logging_function;
 
 OkLoggingContext::OkLoggingContext(char const* tag)
@@ -108,29 +108,37 @@ static void print_log_entry(
 static void default_logging_function(
   char const* tag, OkLoggingLevel lev, uint32_t millis, char const* text
 ) {
+  static uint32_t full_millis = 0;  // First log entry blocked by full buffer
+
   if (ok_logging_stream == nullptr) return;
 
   // FATAL always emits (and flush()/abort()s); backpressure check otherwise.
   // Static state tracks whether we've already noted the current drop run.
-  static bool buffer_full = false;  // Only print one FULL until clear
-  int const headroom = ok_logging_headroom;
-  if (lev != OK_FATAL_LEVEL && headroom > 0) {
+  if (lev != OK_FATAL_LEVEL && ok_logging_non_blocking) {
     int const avail = ok_logging_stream->availableForWrite();
-    // Conservative upper bound: each input byte produces at most 2 output
-    // bytes (\n -> \r\n), plus a generous prefix budget.
-    int const needed = 2 * (int) strlen(text) + 64 +
-        (tag ? (int) strlen(tag) : 0);
-    if (avail < needed + headroom) {
-      if (!buffer_full && avail >= headroom) {
-        ok_logging_stream->print(millis * 1e-3f, 3);
-        ok_logging_stream->println(" ⛔ BUF FULL");
-        buffer_full = true;
-      }
-      return;
+
+    // Upper bound on bytes print_log_entry will write: prefix (timestamp,
+    // emoji, "[tag] ", "ERROR" sentinel) fits in ~32 bytes, body keeps each
+    // non-EOL char and replaces each CR/LF with CRLF, plus a trailing CRLF.
+    int crlf = 0;
+    for (char const* p = text; *p; ++p) {
+      if (*p == '\r' || *p == '\n') ++crlf;
     }
+    int const needed = 32 + (tag ? (int) strlen(tag) : 0)
+        + (int) strlen(text) + crlf;
+
+    if (needed > avail && full_millis == 0) full_millis = millis;
+
+    if (full_millis != 0 && full_millis != (uint32_t) -1 && avail >= 32) {
+      ok_logging_stream->print(full_millis * 1e-3f, 3);
+      ok_logging_stream->println(" ⏸️ BUF FULL");
+      full_millis = (uint32_t) -1;  // Sentinel to avoid re-printing marker
+    }
+
+    if (needed > avail) return;
+    full_millis = 0;
   }
 
-  buffer_full = false;
   print_log_entry(tag, lev, millis, text);
 }
 
