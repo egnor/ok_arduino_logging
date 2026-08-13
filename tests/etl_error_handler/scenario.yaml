@@ -1,0 +1,5 @@
+name: ETL error handler
+version: 1
+steps:
+  # capture one run; the python test checks the serial output log
+  - wait-serial: 'Rebooting...'

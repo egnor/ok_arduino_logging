@@ -1,12 +1,14 @@
 // Adapter for the Embedded Template Library (ETL) to use ok_logging.h macros
-// Only active if ETL_LOG_ERRORS is defined for the project
 
-#ifdef ETL_LOG_ERRORS
+#if defined(__has_include) && __has_include("etl/error_handler.h")
+#include "etl/error_handler.h"  // will pull in etl_profile.h, etc.
+#endif
 
-#include "Embedded_Template_Library.h"
-#include "etl/error_handler.h"
+// Must be set in etl_profile.h or elsewhere to enable
+#if ETL_USE_OK_LOGGING
 
 #include "ok_logging.h"
+#include "Embedded_Template_Library.h"
 
 static void etl_error_handler(etl::exception const& e) {
   ok_log(
@@ -14,12 +16,13 @@ static void etl_error_handler(etl::exception const& e) {
       e.what(), e.file_name(), e.line_number());
 }
 
-static int register_etl_error_handler() {
+bool ok_logging_register_with_etl() {
   etl::error_handler::set_callback<etl_error_handler>();
-  return 0;
+  return true;
 }
 
-// Relies on etl::error_handler::set_callback being global initializer safe
-static int global_init = register_etl_error_handler();
+#else
+
+bool ok_logging_register_with_etl() { return false; }
 
 #endif

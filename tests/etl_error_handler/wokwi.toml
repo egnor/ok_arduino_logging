@@ -1,0 +1,3 @@
+[wokwi]
+version = 1
+firmware = 'output.tmp/etl_error_handler.ino.bin'

@@ -1,0 +1,1 @@
+-DOK_LOGGING_CONFIG="aaa*bbb*ccc=DETAIL,aaa*bbb*=NOTE,*bbb*ccc=ERROR,*bbb*=FATAL"

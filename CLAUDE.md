@@ -18,13 +18,14 @@ The public API lives entirely in `src/ok_logging.h`. The README is the authorita
 
 - **`ok_serial_begin`** (`src/ok_serial_begin.cpp`) is an unrelated convenience helper. It wraps `Serial.begin()` with per-architecture quirks (ESP32 HWCDC vs USBCDC vs UART; RP2040 arduino-pico). The `#if` ladder branches on `ARDUINO_ARCH_ESP32`, `ARDUINO_USB_CDC_ON_BOOT`, `ARDUINO_USB_MODE`, `ESP_ARDUINO_VERSION`, `ARDUINO_ARCH_RP2040`, `NO_USB`. Touch carefully — each branch corresponds to real hardware variants covered by a test in `tests/`.
 
-- **`src/ok_logging_esp32.h`** adds `OK_LOG_ESP_ERRORS` / `OK_FATAL_ESP_ERRORS` macros, only active under `ARDUINO_ARCH_ESP32`.
+- If **`ETL_USE_OK_LOGGING`** is defined, `ok_logging.cpp` registers a callback with the Embedded Template Library's error handler, which calls `ok_log()` with the ETL error message and `FATAL` severity level.
 
-- **`src/ok_logging_etl.cpp`** is an opt-in ETL (Embedded Template Library) error-handler adapter, only compiled when `ETL_LOG_ERRORS` is defined.
+- **`src/ok_logging_esp32.h`** adds `OK_LOG_ESP_ERRORS` / `OK_FATAL_ESP_ERRORS` macros, only active under `ARDUINO_ARCH_ESP32`.
 
 ## Tests
 
 Tests live in `tests/`, one subdirectory per scenario. Each test dir contains:
+
 - A `.ino` sketch that prints `BEGIN-TEST` then exercises the feature.
 - A `sketch.yaml` selecting the `fqbn` and platform (this is what distinguishes ESP32 vs ESP32-C3 vs RP2040 USB/non-USB).
 - `diagram.json`, `wokwi.toml`, `scenario.yaml` for the [Wokwi](https://wokwi.com) simulator.
@@ -45,7 +46,9 @@ uv run pytest basic_logging/                              # one scenario
 uv run pytest basic_logging/basic_logging_test.py::test_basic_logging -v  # one test
 ```
 
-`mise.toml` pins `arduino-cli` (1.3.1), `wokwi-cli` (0.19.1), Python 3.12, and sets `ARDUINO_DIRECTORIES_DATA` to `tests/build.tmp/arduino` so Arduino cores/libs install under the repo rather than `~/.arduino15`. `WOKWI_CLI_TOKEN` is checked in (intentionally — it's the project token). The `postinstall` hook runs `arduino-cli core update-index` and `uv sync`.
+`mise.toml` pins `arduino-cli` (1.3.1), `wokwi-cli` (0.19.1), Python 3.12, and sets `ARDUINO_DIRECTORIES_DATA` to `tests/build.tmp/arduino` so Arduino cores/libs install under the repo rather than `~/.arduino15`. `WOKWI_CLI_TOKEN` is checked in (intentionally — it's the project token). The `postinstall` hook runs `arduino-cli update` and `uv sync`.
+
+Wokwi runs against a cloud API, so tests need network; an occasional `API Error: ... code 1006` is a transient transport drop, not a real failure. Re-run before chasing it.
 
 Build artifacts: each test dir gets an `output.tmp/` (compiled `.bin` + `serial_log.txt`); top-level toolchain state lives in `tests/build.tmp/`. Both are gitignored via `*.tmp`.
 

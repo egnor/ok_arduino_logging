@@ -97,6 +97,7 @@ By default, logging statements (`OK_ERROR`, etc) write directly to `Serial`. If 
 If you set `ok_logging_non_blocking = true`, non-FATAL messages that would otherwise block are dropped, printing a `⏸️ BUF FULL` marker instead.
 
 Recommended practices for logging:
+
 - Keep logging volume to a dull roar; be judicious about what tags you enable.
 - For UART serial, use a high baud rate if possible. (Has no effect on USB serial.)
 - Expand the transmit buffer (eg. `ok_serial_begin({.tx_buffer_size = 4096})`, see below).
@@ -104,6 +105,7 @@ Recommended practices for logging:
 - _Maybe also_ make the serial port itself non-blocking (eg. `ok_serial_begin({.tx_non_blocking = true})`, see below), as a cruder backstop for non-logging output (eg. direct `Serial.print(...)`).
 
 Caveats:
+
 - Default transmit buffers are small. Use at least 4 KB for non-blocking logging.
 - RP2xxx Arduino has a small fixed buffer and doesn't support non-blocking output.
 - ESP32 Arduino in USB-OTG mode (_not_ "Hardware CDC and JTAG") has a fixed buffer.
@@ -113,6 +115,7 @@ Caveats:
 - Assign `ok_logging_minimum` for an additional global squelch (default `OK_DETAIL_LEVEL`, no squelch)
 - Assign a `Print*` stream to `ok_logging_stream` to redirect output (`&Serial` by default)
 - Assign your own function to `ok_logging_function` to redefine output entirely (see `OkLoggingFunction` in [`ok_logging.h`](src/ok_logging.h))
+- If you use [ETL](https://github.com/ETLCPP/etl), define `ETL_USE_OK_LOGGING=1` with `ETL_LOG_ERRORS=1` (eg. in `etl_profile.h`) to report ETL errors as `OK_FATAL` errors.
 
 ### Serial port helper
 

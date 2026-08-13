@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12"
 
 [[package]]
@@ -26,14 +26,14 @@ version = "0.1"
 source = { virtual = "." }
 dependencies = [
     { name = "ok-logging-setup" },
-    { name = "ok-subprocess-defaults" },
+    { name = "ok-subprocess-runner" },
     { name = "pytest" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "ok-logging-setup", specifier = ">=0.10" },
-    { name = "ok-subprocess-defaults", specifier = ">=0.1" },
+    { name = "ok-subprocess-runner", specifier = ">=0.5" },
     { name = "pytest", specifier = ">=9.0.1" },
 ]
 
@@ -47,12 +47,12 @@ wheels = [
 ]
 
 [[package]]
-name = "ok-subprocess-defaults"
-version = "0.1"
+name = "ok-subprocess-runner"
+version = "0.5"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ad/e7/ca0a851514bc011e81964341c3a17dbadf54fe58f616145ecc52ae37b12f/ok_subprocess_defaults-0.1.tar.gz", hash = "sha256:0dd935b66d483be430a14032c76baac140f825c7968a18d9fa3a62ff33b427f1", size = 10982, upload-time = "2025-05-05T03:18:33.043Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7f/7d/9dba442ccecbf34f1ac53acb3ed840e235ff6fcfde4f52c3f0f60faae1d2/ok_subprocess_runner-0.5.tar.gz", hash = "sha256:ac13323d5d948c11d56226da1f2df37c604eb0595a780ab18a81dccd552d642b", size = 3932, upload-time = "2026-08-03T19:40:36.128Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2d/f4/26538552dd384409547b1f6a17b3aec97a0ffff1bccbf8eeeccffbd3c508/ok_subprocess_defaults-0.1-py3-none-any.whl", hash = "sha256:bd5a622f2f5aa040e90a985508c242dc0b28fa8cef29b4e1bce52c743e87b3ba", size = 4683, upload-time = "2025-05-05T03:18:31.905Z" },
+    { url = "https://files.pythonhosted.org/packages/41/c2/8dd61a3423561f9cb6b7b2c44b8cc3ace368972c0ad2fb09c742256a02e8/ok_subprocess_runner-0.5-py3-none-any.whl", hash = "sha256:2691519e2a88c8d4b08f31cb5367caedb4918652820a6c1b4c363a569adc41a2", size = 4836, upload-time = "2026-08-03T19:40:34.904Z" },
 ]
 
 [[package]]

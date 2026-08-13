@@ -20,4 +20,4 @@ _.python.venv = { path = "{{env.UV_PROJECT_ENVIRONMENT}}" }
 UV_PROJECT_ENVIRONMENT = "{{config_root}}/build.tmp/python_venv"
 
 [hooks]
-postinstall = ["arduino-cli core update-index", "uv sync"]
+postinstall = ["arduino-cli update", "uv sync"]

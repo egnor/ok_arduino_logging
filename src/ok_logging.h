@@ -58,19 +58,14 @@ extern char const* const ok_logging_config;
 // Assign to set a global squelch on top of tag config, default OK_DETAIL_LEVEL
 extern OkLoggingLevel ok_logging_minimum;
 
-// Assign to change the logging output Stream, default &Serial
+// Assign to change the logging output stream, default &Serial
 extern Print* ok_logging_stream;
 
-// True to skip logging if the buffer fills. (Prints "BUF FULL" if possible.)
+// Assign true to print "BUF FULL" and skip logging if the serial buffer fills.
 // You'll want a decent buffer (4K+), see ok_serial_begin's tx_buffer_size.
 extern bool ok_logging_non_blocking;
 
-// Assign to your own function to redefine logging strategy entirely.
-// The function is called after filtering and printf argument formatting:
-//   tag - name of tag generating the log message
-//   lev - logging level of message
-//   ts - millis() timestamp on first processing log
-//   text - log message after printf argument formatting is done
+// Assign your own function to redefine logging output strategy entirely.
 using OkLoggingFunction =
     void(char const* tag, OkLoggingLevel lev, uint32_t ts, char const* text);
 extern OkLoggingFunction* ok_logging_function;

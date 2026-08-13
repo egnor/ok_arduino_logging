@@ -4,6 +4,10 @@
 #include <cstdlib>
 #include <cstring>
 
+#if defined(__has_include) && __has_include("etl/error_handler.h")
+#include "etl/error_handler.h"  // Pulls in etl_profile.h, etc.
+#endif
+
 static OkLoggingLevel min_level_for_tag(char const*);
 static OkLoggingFunction default_logging_function;
 
@@ -150,12 +154,14 @@ static char const* next_of(char const* p, char const* end, char const* m) {
 static bool glob_match(
     char const* glob, char const* glob_end,
     char const* match, char const* match_end) {
-  // Text before the first '*' must match exactly
+  // Glob-text before the first '*' must be a prefix
   char const* next_star = next_of(glob, glob_end, "*");
   if (strncasecmp(match, glob, next_star - glob)) return false;
-  if (next_star >= glob_end) return true;
 
-  // Text between '*'s must match in order
+  // Glob-text with no '*' must match directly
+  if (next_star >= glob_end) return match_end - match == glob_end - glob;
+
+  // Glob-text between '*'s must match in order
   while (true) {
     match += (next_star - glob);
     glob = next_star + 1;
@@ -168,7 +174,7 @@ static bool glob_match(
     }
   }
 
-  // Text after the last '*' must be a suffix
+  // Glob-text after the last '*' must be a suffix
   return 
       match_end - match >= glob_end - glob &&
       strncasecmp(match_end - (glob_end - glob), glob, glob_end - glob) == 0;
@@ -244,3 +250,25 @@ static OkLoggingLevel min_level_for_tag(char const* tag) {
     pos = entry_end + 1;
   }
 }
+
+// Adapter for the Embedded Template Library (ETL) to report errors as OK_FATAL
+// The user must define ETL_USE_OK_LOGGING=1 (eg. in etl_config.h) to enable
+#if ETL_USE_OK_LOGGING
+  #if !ETL_LOG_ERRORS
+    #error "ETL_USE_OK_LOGGING requires ETL_LOG_ERRORS=1"
+  #endif
+
+  static void etl_error_handler(etl::exception const& e) {
+    ok_log(
+        "ETL", OK_FATAL_LEVEL, "%s\n  at: %s:%d",
+        e.what(), e.file_name(), e.line_number());
+  }
+
+  bool ok_logging_register_with_etl() {
+    etl::error_handler::set_callback<etl_error_handler>();
+    return true;
+  }
+
+  [[maybe_unused]] static bool const _etl_reg = ok_logging_register_with_etl();
+
+#endif
