@@ -76,7 +76,7 @@ Logging macros are defined in `<ok_logging.h>`
 
 Logs are filtered with a global configuration string, which can be set one of two ways:
 
-- Define `char const* ok_logging_config = "...";` in a source file
+- Define `char const* const ok_logging_config = "...";` in a source file
 - OR pass `-DOK_LOGGING_CONFIG=...` to the compiler
 
 Either way, the configuration string is a comma-separated series of `tagpattern=level` rules, where `tagpattern` is a log tag (as set in `OK_CONTEXT`) with optional `*` wildcards, and `level` is one of `DETAIL`, `NOTE`, `ERROR`, or `FATAL`. A bare level name with no `=` is equivalent to `*=level`. For each log tag, the first matching rule is used as the minimum level to print.
