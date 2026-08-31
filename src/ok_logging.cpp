@@ -48,11 +48,11 @@ void ok_logv(char const* tag, OkLoggingLevel lev, char const* fmt, va_list va) {
     logging_config_error = nullptr;  // avoid recursion during complaint
     last_complaint_millis = t;  // complain periodically
     if (error == ok_logging_config && *error_end == '\0') {
-      ok_log("ok_logging", OK_ERROR_LEVEL, "Bad config: \"%s\"", error);
+      ok_log("ok_logging", OK_ERROR_LEVEL, "Bad logging config: \"%s\"", error);
     } else {
       ok_log(
         "ok_logging", OK_ERROR_LEVEL,
-        "Bad directive: \"%.*s\"\n  Full config: \"%s\"",
+        "Bad directive: \"%.*s\"\n  in logging config: \"%s\"",
         error_end - error, error, ok_logging_config
       );
     }

@@ -13,32 +13,35 @@
   char const* const ok_logging_config = STRINGIFY(TEST_LOGGING_CONFIG);
 #endif
 
+static OkLoggingContext OK_CONTEXT("logging_config");
+
 void setup() {
   Serial.setTxBufferSize(4096);
   Serial.begin(115200);
   Serial.println("BEGIN-TEST");
-  Serial.printf("OK_LOGGING_CONFIG=%s\n", OK_LOGGING_CONFIG_STR);
-
   char const* const config = ok_logging_config ? ok_logging_config : "-null-";
-  Serial.printf("ok_logging_config=%s\n", config);
+  OK_NOTE("OK_LOGGING_CONFIG=%s", OK_LOGGING_CONFIG_STR);
+  OK_NOTE("ok_logging_config=%s", config);
 
   {
-    OkLoggingContext OK_CONTEXT("aaa~~~bbb~~~ccc");
+    static OkLoggingContext OK_CONTEXT("aaa~~~bbb~~~ccc");
     Serial.printf("tag=%s min=%d\n", OK_CONTEXT.tag, OK_CONTEXT.min);
   }
   {
-    OkLoggingContext OK_CONTEXT("aaa~~~bbb~~~ccc~~~");
+    static OkLoggingContext OK_CONTEXT("aaa~~~bbb~~~ccc~~~");
     Serial.printf("tag=%s min=%d\n", OK_CONTEXT.tag, OK_CONTEXT.min);
   }
   {
-    OkLoggingContext OK_CONTEXT("~~~aaa~~~bbb~~~ccc");
+    static OkLoggingContext OK_CONTEXT("~~~aaa~~~bbb~~~ccc");
     Serial.printf("tag=%s min=%d\n", OK_CONTEXT.tag, OK_CONTEXT.min);
   }
   {
-    OkLoggingContext OK_CONTEXT("~~~aaa~~~bbb~~~ccc~~~");
+    static OkLoggingContext OK_CONTEXT("~~~aaa~~~bbb~~~ccc~~~");
     Serial.printf("tag=%s min=%d\n", OK_CONTEXT.tag, OK_CONTEXT.min);
   }
-  OkLoggingContext OK_CONTEXT("logging_config");
+
+  OK_NOTE("sleeping 1sec");
+  delay(1000);
   OK_FATAL("END-TEST");
 }
 
