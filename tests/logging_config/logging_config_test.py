@@ -7,7 +7,7 @@ def test_basic_logging(wokwi_output_dir):
         r"[\d.]+ \[aaa~~~bbb~~~ccc~~~\] shown",
         r"[\d.]+ ⚠️ \[~~~aaa~~~bbb~~~ccc\] shown",
         r"[\d.]+ 💥 \[~~~aaa~~~bbb~~~ccc~~~\] FATAL shown",
-        r"  at: .*/logging_config_symbol.ino:\d+",
+        r"  at: .*/logging_config.ino:\d+",
         r"  in: void setup\(\)",
         r"  🚨 REBOOT IN 1 SEC 🚨",
     ]

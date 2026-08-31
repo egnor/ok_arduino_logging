@@ -10,6 +10,7 @@
 
 static OkLoggingLevel min_level_for_tag(char const*);
 static OkLoggingFunction default_logging_function;
+static char const* logging_config_error = nullptr;
 
 // Exposed globals
 OkLoggingLevel ok_logging_minimum = OK_DETAIL_LEVEL;
@@ -20,6 +21,16 @@ OkLoggingFunction* ok_logging_function = &default_logging_function;
 OkLoggingContext::OkLoggingContext(char const* tag)
   : tag(tag), min(min_level_for_tag(tag)) {}
 
+static char const* next_of(char const* p, char const* end, char const* m) {
+  while (p < end && !strchr(m, *p)) ++p;
+  return p;
+}
+
+static void trim(char const** p, char const** end) {
+  while (*p < *end && strchr(" \t\r\n", **p)) ++*p;
+  while (*p < *end && strchr(" \t\r\n", (*end)[-1])) --*end;
+}
+
 void ok_log(char const* tag, OkLoggingLevel lev, char const* fmt, ...) {
   va_list va;
   va_start(va, fmt);
@@ -28,6 +39,16 @@ void ok_log(char const* tag, OkLoggingLevel lev, char const* fmt, ...) {
 }
 
 void ok_logv(char const* tag, OkLoggingLevel lev, char const* fmt, va_list va) {
+  if (char const* bad_seg = logging_config_error) {
+    logging_config_error = nullptr;  // Only report once per boot
+    char const* bad_seg_end = next_of(bad_seg, bad_seg + strlen(bad_seg), ",;");
+    ok_log(
+      "ok_logging", OK_ERROR_LEVEL,
+      "Bad logging directive: \"%.*s\"\n  Full config: %s",
+      bad_seg_end - bad_seg, bad_seg, ok_logging_config
+    );
+  }
+
   auto const t = millis();
   char stack_buf[128];
   char* buf = stack_buf;
@@ -121,18 +142,13 @@ static void default_logging_function(
   if (lev != OK_FATAL_LEVEL && ok_logging_non_blocking) {
     int const avail = ok_logging_stream->availableForWrite();
 
-    // Upper bound on bytes print_log_entry will write: prefix (timestamp,
-    // emoji, "[tag] ", "ERROR" sentinel) fits in ~32 bytes, body keeps each
-    // non-EOL char and replaces each CR/LF with CRLF, plus a trailing CRLF.
-    int crlf = 0;
+    // 32 bytes for prefix (timestamp, emoji, brackets, "ERROR", etc),
+    // plus prefix and body with an extra byte per line for CRLF translation
+    int needed = 32 + (tag ? (int) strlen(tag) : 0) + strlen(text);
     for (char const* p = text; *p; ++p) {
-      if (*p == '\r' || *p == '\n') ++crlf;
+      if (*p == '\r' || *p == '\n') ++needed;
     }
-    int const needed = 32 + (tag ? (int) strlen(tag) : 0)
-        + (int) strlen(text) + crlf;
-
     if (needed > avail && full_millis == 0) full_millis = millis;
-
     if (full_millis != 0 && full_millis != (uint32_t) -1 && avail >= 32) {
       ok_logging_stream->print(full_millis * 1e-3f, 3);
       ok_logging_stream->println(" ⏸️ BUF FULL");
@@ -144,11 +160,6 @@ static void default_logging_function(
   }
 
   print_log_entry(tag, lev, millis, text);
-}
-
-static char const* next_of(char const* p, char const* end, char const* m) {
-  while (p < end && !strchr(m, *p)) ++p;
-  return p;
 }
 
 static bool glob_match(
@@ -180,42 +191,18 @@ static bool glob_match(
       strncasecmp(match_end - (glob_end - glob), glob, glob_end - glob) == 0;
 }
 
-static void trim(char const** p, char const** end) {
-  while (*p < *end && strchr(" \t\r\n", **p)) ++*p;
-  while (*p < *end && strchr(" \t\r\n", (*end)[-1])) --*end;
-}
-
 static OkLoggingLevel level_for_name(char const* level, char const* end) {
   auto const is = [level, end](char const* s) {
     return !strncasecmp(level, s, end - level) && !s[end - level];
   };
 
-  if (is("*") ||
-      is("a") || is("all") ||
-      is("d") || is("debug") || is("detail") ||
-      is("v") || is("verbose")) {
-    return OK_DETAIL_LEVEL;
-  }
+  if (is("*") || is("d") || is("detail")) return OK_DETAIL_LEVEL;
+  if (is("n") || is("note")) return OK_NOTE_LEVEL;
+  if (is("e") || is("error")) return OK_ERROR_LEVEL;
+  if (is("f") || is("fatal")) return OK_FATAL_LEVEL;
 
-  if (is("default") ||
-      is("i") || is("info") ||
-      is("n") || is("normal") || is("note") || is("notice") || is("notable")) {
-    return OK_NOTE_LEVEL;
-  }
-
-  if (is("e") || is("error") ||
-      is("p") || is("prob") || is("problem") ||
-      is("w") || is("warn") || is("warning")) {
-    return OK_ERROR_LEVEL;
-  }
-
-  if (is("none") || is("f") || is("fatal") || is("p") || is("panic")) {
-    return OK_FATAL_LEVEL;
-  }
-
-  ok_log(
-      "ok_logging", OK_ERROR_LEVEL, "Bad level \"%.*s\" in config:\r\n  %s",
-      end - level, level, ok_logging_config);
+  // Defer reporting until another log call when the runtime is set up
+  if (!logging_config_error) logging_config_error = level;  // Init-safe error
   return OK_DETAIL_LEVEL;
 }
 
@@ -223,29 +210,25 @@ static OkLoggingLevel min_level_for_tag(char const* tag) {
   if (ok_logging_config == nullptr) return OK_NOTE_LEVEL;
 
   // Find the "tag=level,..." entry that matches the given tag
-  char const* config_end = ok_logging_config + strlen(ok_logging_config);
+  static char const* config_end = ok_logging_config + strlen(ok_logging_config);
   char const* tag_end = tag ? tag + strlen(tag) : nullptr;
   char const* pos = ok_logging_config;
   while (true) {
-    char const* entry = pos;
-    char const* entry_end = next_of(pos, config_end, ",;");
-
-    char const* glob = entry;
-    char const* glob_end = next_of(entry, entry_end, "=:");
-
-    char const* level = glob_end < entry_end ? glob_end + 1 : glob_end;
-    char const* level_end = entry_end;
-
-    trim(&glob, &glob_end);
-    trim(&level, &level_end);
-    if (glob == glob_end || level == level_end) {
-      ok_log(
-          "ok_logging", OK_ERROR_LEVEL, "Bad entry \"%.*s\" in config:\r\n  %s",
-          level_end - glob, glob, ok_logging_config);
-    } else if (glob_match(glob, glob_end, tag, tag_end)) {
-      return level_for_name(level, level_end);
+    char const* entry = pos, *entry_end = next_of(pos, config_end, ",;");
+    char const* split = next_of(entry, entry_end, "=:");
+    if (entry < split && split < entry_end) {
+      char const* glob = entry, *glob_end = split;
+      trim(&glob, &glob_end);
+      if (glob_match(glob, glob_end, tag, tag_end)) {
+        char const* level = split + 1, *level_end = entry_end;
+        trim(&level, &level_end);
+      }
+    } else if (split == entry_end && entry_end == config_end) {
+      return level_for_name(entry, entry_end);
+    } else {
+      // Defer reporting until another log call when the runtime is set up
+      if (!logging_config_error) logging_config_error = entry;
     }
-
     if (entry_end == config_end) return OK_NOTE_LEVEL;  // Default
     pos = entry_end + 1;
   }
@@ -270,5 +253,4 @@ static OkLoggingLevel min_level_for_tag(char const* tag) {
   }
 
   [[maybe_unused]] static bool const _etl_reg = ok_logging_register_with_etl();
-
 #endif
