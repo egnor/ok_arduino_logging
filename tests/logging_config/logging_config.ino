@@ -1,31 +1,45 @@
 #include <ok_logging.h>
 
-char const* const ok_logging_config =
-    "aaa*bbb*ccc=DETAIL,aaa*bbb*=NOTE,*bbb*ccc=ERROR,*bbb*=FATAL";
+#define STRINGIFY_(...) #__VA_ARGS__
+#define STRINGIFY(...) STRINGIFY_(__VA_ARGS__)
+
+#if defined(OK_LOGGING_CONFIG)
+  #define OK_LOGGING_CONFIG_STR STRINGIFY(OK_LOGGING_CONFIG)
+#else
+  #define OK_LOGGING_CONFIG_STR "-undef-"
+#endif
+
+#if defined(TEST_LOGGING_CONFIG)
+  char const* const ok_logging_config = STRINGIFY(TEST_LOGGING_CONFIG);
+#endif
 
 void setup() {
   Serial.setTxBufferSize(4096);
   Serial.begin(115200);
   Serial.println("BEGIN-TEST");
+  Serial.printf("OK_LOGGING_CONFIG=%s\n", OK_LOGGING_CONFIG_STR);
+
+  char const* const config = ok_logging_config ? ok_logging_config : "-null-";
+  Serial.printf("ok_logging_config=%s\n", config);
+
   {
     OkLoggingContext OK_CONTEXT("aaa~~~bbb~~~ccc");
-    OK_DETAIL("shown");
+    Serial.printf("tag=%s min=%d\n", OK_CONTEXT.tag, OK_CONTEXT.min);
   }
   {
     OkLoggingContext OK_CONTEXT("aaa~~~bbb~~~ccc~~~");
-    OK_DETAIL("hidden");
-    OK_NOTE("shown");
+    Serial.printf("tag=%s min=%d\n", OK_CONTEXT.tag, OK_CONTEXT.min);
   }
   {
     OkLoggingContext OK_CONTEXT("~~~aaa~~~bbb~~~ccc");
-    OK_NOTE("hidden");
-    OK_ERROR("shown");
+    Serial.printf("tag=%s min=%d\n", OK_CONTEXT.tag, OK_CONTEXT.min);
   }
   {
     OkLoggingContext OK_CONTEXT("~~~aaa~~~bbb~~~ccc~~~");
-    OK_ERROR("hidden");
-    OK_FATAL("shown");
+    Serial.printf("tag=%s min=%d\n", OK_CONTEXT.tag, OK_CONTEXT.min);
   }
+  OkLoggingContext OK_CONTEXT("logging_config");
+  OK_FATAL("END-TEST");
 }
 
 void loop() {

@@ -10,9 +10,13 @@ dependencies = [
   "ok-logging-setup>=0.10",
   "ok-subprocess-runner>=0.5",
   "pytest>=9.0.1",
+  "pytest-xdist>=3.8.0",
 ]
 
 [tool.pytest]
 log_level = "CRITICAL"    # logs end up in stdout per conftest.py
 norecursedirs = ["*.tmp"]
 strict = true
+
+[tool.ruff]
+line-length = 80

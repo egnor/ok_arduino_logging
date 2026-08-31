@@ -1,7 +1,6 @@
-import re
-
-def test_basic_logging(wokwi_output_dir):
-    expected_regexs = [
+def test_basic_logging(run_wokwi):
+    run_wokwi().assert_lines_match(
+        r"BEGIN-TEST",
         r"[\d.]+ \[basic_logging\] Note message",
         r"",
         r"[\d.]+ \[basic_logging\] Note with newlines before and after",
@@ -17,9 +16,4 @@ def test_basic_logging(wokwi_output_dir):
         r"  at: .*/basic_logging.ino:\d+",
         r"  in: void setup\(\)",
         r"  🚨 REBOOT IN 1 SEC 🚨",
-    ]
-
-    log_lines = (wokwi_output_dir / "serial_log.txt").read_text().splitlines()
-    test_log_lines = log_lines[log_lines.index("BEGIN-TEST") + 1:]
-    for expect_rx, line in zip(expected_regexs, test_log_lines):
-        assert re.fullmatch(expect_rx, line), f'"{line}" !~ /{expect_rx}/'
+    )

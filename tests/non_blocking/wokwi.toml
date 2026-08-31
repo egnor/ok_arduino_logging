@@ -1,3 +1,0 @@
-[wokwi]
-version = 1
-firmware = 'output.tmp/non_blocking.ino.bin'

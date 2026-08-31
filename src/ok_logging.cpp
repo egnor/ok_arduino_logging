@@ -39,14 +39,18 @@ void ok_log(char const* tag, OkLoggingLevel lev, char const* fmt, ...) {
 }
 
 void ok_logv(char const* tag, OkLoggingLevel lev, char const* fmt, va_list va) {
-  if (char const* bad_seg = logging_config_error) {
+  if (char const* bad = logging_config_error) {
     logging_config_error = nullptr;  // Only report once per boot
-    char const* bad_seg_end = next_of(bad_seg, bad_seg + strlen(bad_seg), ",;");
-    ok_log(
-      "ok_logging", OK_ERROR_LEVEL,
-      "Bad logging directive: \"%.*s\"\n  Full config: %s",
-      bad_seg_end - bad_seg, bad_seg, ok_logging_config
-    );
+    auto const bad_end = next_of(bad, bad + strlen(bad), ",;");
+    if (bad == ok_logging_config && *bad_end == '\0') {
+      ok_log("ok_logging", OK_ERROR_LEVEL, "Bad config: \"%s\"", bad);
+    } else {
+      ok_log(
+        "ok_logging", OK_ERROR_LEVEL,
+        "Bad directive: \"%.*s\"\n  Full config: \"%s\"",
+        bad_end - bad, bad, ok_logging_config
+      );
+    }
   }
 
   auto const t = millis();
@@ -201,7 +205,7 @@ static OkLoggingLevel level_for_name(char const* level, char const* end) {
   if (is("e") || is("error")) return OK_ERROR_LEVEL;
   if (is("f") || is("fatal")) return OK_FATAL_LEVEL;
 
-  // Defer reporting until another log call when the runtime is set up
+  // Defer error reporting until a log call when the runtime is set up
   if (!logging_config_error) logging_config_error = level;  // Init-safe error
   return OK_DETAIL_LEVEL;
 }
@@ -222,11 +226,12 @@ static OkLoggingLevel min_level_for_tag(char const* tag) {
       if (glob_match(glob, glob_end, tag, tag_end)) {
         char const* level = split + 1, *level_end = entry_end;
         trim(&level, &level_end);
+        return level_for_name(level, level_end);
       }
     } else if (split == entry_end && entry_end == config_end) {
       return level_for_name(entry, entry_end);
     } else {
-      // Defer reporting until another log call when the runtime is set up
+      // Defer error reporting until a log call when the runtime is set up
       if (!logging_config_error) logging_config_error = entry;
     }
     if (entry_end == config_end) return OK_NOTE_LEVEL;  // Default
