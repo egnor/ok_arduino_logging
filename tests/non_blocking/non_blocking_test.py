@@ -1,6 +1,3 @@
-import re
-
-
 def test_non_blocking(run_wokwi):
     run_wokwi().assert_lines_match(
         "BEGIN-TEST",

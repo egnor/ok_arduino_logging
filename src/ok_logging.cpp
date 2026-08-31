@@ -10,7 +10,9 @@
 
 static OkLoggingLevel min_level_for_tag(char const*);
 static OkLoggingFunction default_logging_function;
+
 static char const* logging_config_error = nullptr;
+static unsigned long last_complaint_millis = -10000;  // complain immediately
 
 // Exposed globals
 OkLoggingLevel ok_logging_minimum = OK_DETAIL_LEVEL;
@@ -39,21 +41,24 @@ void ok_log(char const* tag, OkLoggingLevel lev, char const* fmt, ...) {
 }
 
 void ok_logv(char const* tag, OkLoggingLevel lev, char const* fmt, va_list va) {
-  if (char const* bad = logging_config_error) {
-    logging_config_error = nullptr;  // Only report once per boot
-    auto const bad_end = next_of(bad, bad + strlen(bad), ",;");
-    if (bad == ok_logging_config && *bad_end == '\0') {
-      ok_log("ok_logging", OK_ERROR_LEVEL, "Bad config: \"%s\"", bad);
+  auto const t = millis();
+  if (logging_config_error && t - last_complaint_millis > 1000) {
+    auto const* error = logging_config_error;
+    auto const error_end = next_of(error, error + strlen(error), ",;");
+    logging_config_error = nullptr;  // avoid recursion during complaint
+    last_complaint_millis = t;  // complain periodically
+    if (error == ok_logging_config && *error_end == '\0') {
+      ok_log("ok_logging", OK_ERROR_LEVEL, "Bad config: \"%s\"", error);
     } else {
       ok_log(
         "ok_logging", OK_ERROR_LEVEL,
         "Bad directive: \"%.*s\"\n  Full config: \"%s\"",
-        bad_end - bad, bad, ok_logging_config
+        error_end - error, error, ok_logging_config
       );
     }
+    logging_config_error = error;
   }
 
-  auto const t = millis();
   char stack_buf[128];
   char* buf = stack_buf;
   auto len = vsnprintf(buf, sizeof(stack_buf), fmt, va);
