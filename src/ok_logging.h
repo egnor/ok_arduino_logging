@@ -44,8 +44,10 @@ struct OkLoggingContext {
     ok_log(OK_CONTEXT.tag, (lev), "" fmt "\n  at: %s:%d\n  in: %s", \
            ##__VA_ARGS__, __FILE__, __LINE__, __PRETTY_FUNCTION__); else {}
 
-void ok_log(char const* tag, OkLoggingLevel, char const*, ...);
-void ok_logv(char const* tag, OkLoggingLevel, char const*, va_list);
+void ok_log(char const* tag, OkLoggingLevel, char const*, ...)
+  __attribute__((format(printf, 3, 4)));
+void ok_logv(char const* tag, OkLoggingLevel, char const*, va_list)
+  __attribute__((format(printf, 3, 0)));
 
 //
 // Logging configuration
