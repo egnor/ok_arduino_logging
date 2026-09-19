@@ -54,6 +54,6 @@ Build artifacts: each test dir gets an `output.tmp/` (compiled `.bin` + `serial_
 
 ## Conventions
 
-- `OK_REPORT_SOURCE` (used by `OK_FATAL*` and `OK_ERROR_IF`) appends `__FILE__:__LINE__` and `__PRETTY_FUNCTION__`. Plain `OK_NOTE`/`OK_ERROR` deliberately do *not* — keep that asymmetry.
+- `OK_LOG_SOURCE` (used by `OK_FATAL*` and `OK_ERROR_IF`) appends `__FILE__:__LINE__` and `__PRETTY_FUNCTION__`. Plain `OK_NOTE`/`OK_ERROR` deliberately do *not* — keep that asymmetry.
 - The default formatter trims trailing whitespace and rewrites embedded CR/LF as `println()` calls; tests assert this behavior (see `basic_logging_test.py`).
 - Tag matching in `min_level_for_tag` / `glob_match` is case-insensitive (`strncasecmp`). Level names accept many aliases (`level_for_name` in `ok_logging.cpp`).

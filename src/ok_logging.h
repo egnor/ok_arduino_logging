@@ -29,20 +29,30 @@ struct OkLoggingContext {
 // Logging macros for different priority levels
 //
 
-#define OK_DETAIL(fmt, ...) OK_REPORT(OK_DETAIL_LEVEL, fmt, ##__VA_ARGS__)
-#define OK_NOTE(fmt, ...) OK_REPORT(OK_NOTE_LEVEL, fmt, ##__VA_ARGS__)
-#define OK_ERROR(fmt, ...) OK_REPORT(OK_ERROR_LEVEL, fmt, ##__VA_ARGS__)
-#define OK_FATAL(fmt, ...) OK_REPORT_SOURCE(OK_FATAL_LEVEL, fmt, ##__VA_ARGS__)
-#define OK_FATAL_IF(c) if (c) OK_FATAL("%s", #c) else {}
-#define OK_ERROR_IF(c) \
-    ({const auto e = c; if (e) OK_REPORT_SOURCE(OK_ERROR_LEVEL, "%s", #c); e;})
+#define OK_DETAIL(fmt, ...) \
+  OK_LOG(OK_CONTEXT, OK_DETAIL_LEVEL, fmt, ##__VA_ARGS__)
+#define OK_NOTE(fmt, ...) \
+  OK_LOG(OK_CONTEXT, OK_NOTE_LEVEL, fmt, ##__VA_ARGS__)
+#define OK_ERROR(fmt, ...) \
+  OK_LOG(OK_CONTEXT, OK_ERROR_LEVEL, fmt, ##__VA_ARGS__)
+#define OK_FATAL(fmt, ...) \
+  OK_LOG_SOURCE(OK_CONTEXT, OK_FATAL_LEVEL, fmt, ##__VA_ARGS__)
 
-#define OK_LOGGABLE(l) ((l) >= OK_CONTEXT.min && (l) >= ok_logging_minimum)
-#define OK_REPORT(lev, fmt, ...) if (OK_LOGGABLE(lev)) \
-    ok_log(OK_CONTEXT.tag, (lev), "" fmt, ##__VA_ARGS__); else {}
-#define OK_REPORT_SOURCE(lev, fmt, ...) if (OK_LOGGABLE(lev)) \
-    ok_log(OK_CONTEXT.tag, (lev), "" fmt "\n  at: %s:%d\n  in: %s", \
-           ##__VA_ARGS__, __FILE__, __LINE__, __PRETTY_FUNCTION__); else {}
+#define OK_FATAL_IF(cond) ({ if (cond) OK_FATAL("%s", #cond); })
+#define OK_ERROR_IF(cond) ({ \
+    const auto _e = cond; \
+    if (_e) OK_LOG_SOURCE(OK_CONTEXT, OK_ERROR_LEVEL, "%s", #cond); _e; \
+  })
+
+#define OK_LOGGABLE(cx, l) ((l) >= cx.min && (l) >= ok_logging_minimum)
+#define OK_LOG(cx, lev, fmt, ...) ({ \
+    if (OK_LOGGABLE(cx, lev)) ok_log(cx.tag, (lev), "" fmt, ##__VA_ARGS__); \
+  })
+#define OK_LOG_SOURCE(cx, lev, fmt, ...) ({ \
+    if (OK_LOGGABLE(cx, lev)) ok_log( \
+      cx.tag, (lev), "" fmt "\n  at: %s:%d\n  in: %s", \
+      ##__VA_ARGS__, __FILE__, __LINE__, __PRETTY_FUNCTION__); \
+  })
 
 void ok_log(char const* tag, OkLoggingLevel, char const*, ...)
   __attribute__((format(printf, 3, 4)));
