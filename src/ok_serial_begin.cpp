@@ -42,7 +42,7 @@ void ok_serial_begin(OkLoggingSerialOptions const& opts) {
             while (!Serial.isConnected()) {
               if (millis() - start > opts.connect_wait_millis) break;
               plug_seen = plug_seen || Serial.isPlugged();
-              if (!plug_seen && millis() - start > 100) break;
+              if (!plug_seen && millis() - start > opts.usb_wait_millis) break;
               delay(10);
             }
           #else
@@ -65,7 +65,7 @@ void ok_serial_begin(OkLoggingSerialOptions const& opts) {
           while (!Serial) {
             if (millis() - start > opts.connect_wait_millis) break;
             plug_seen = plug_seen || tud_connected();
-            if (!plug_seen && millis() - start > 100) break;
+            if (!plug_seen && millis() - start > opts.usb_wait_millis) break;
             delay(10);
           }
         }
@@ -110,7 +110,7 @@ void ok_serial_begin(OkLoggingSerialOptions const& opts) {
         while (!Serial) {
           if (millis() - start > opts.connect_wait_millis) break;
           plug_seen = plug_seen || tud_connected();
-          if (!plug_seen && millis() - start > 100) break;
+          if (!plug_seen && millis() - start > opts.usb_wait_millis) break;
           delay(10);
         }
       }

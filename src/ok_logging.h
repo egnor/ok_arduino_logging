@@ -91,7 +91,8 @@ struct OkLoggingSerialOptions {
   int rx_buffer_size = 0;
   int tx_buffer_size = 0;
   bool tx_non_blocking = false;  // Drop output data instead of blocking
-  int connect_wait_millis = 5000;  // If USB data is present, wait for monitor
+  int connect_wait_millis = 5000;  // Wait for serial if USB present
+  int usb_wait_millis = 500;  // Wait for USB (only if connect_wait_millis>0)
 };
 
 // Calls Serial.begin(opts.baud) and then applies the other settings
